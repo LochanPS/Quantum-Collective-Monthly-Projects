@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install tools
+        run: pip install black pylint
+
+      - name: Check formatting (black)
+        run: black --check .
+
+      - name: Lint (pylint)
+        run: pylint **/*.py --disable=C0114,C0115,C0116 --fail-under=7.0 || true
