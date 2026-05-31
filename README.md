@@ -1,8 +1,50 @@
-# Quantum Collective Monthly Projects
+# Quantum Collective — Monthly Projects
 
 Monthly collaborative coding challenges from **Quantum Collective** — a 600+ member quantum computing community based in Bangalore, India.
 
-One problem per month. Three difficulty tiers. Open to everyone.
+Build real quantum tools. Learn by shipping.
+
+---
+
+## 🚀 What's Live Now
+
+### **May 2026: Quantum Circuit Simulator (qcsim)**
+
+Production-ready quantum circuit simulator + interactive terminal UI + community circuit library.
+
+**Get started in 30 seconds:**
+```bash
+git clone https://github.com/LochanPS/Quantum-Collective-Monthly-Projects.git
+cd Quantum-Collective-Monthly-Projects/2026-05-circuit-simulator/reference
+pip install -e .
+qcsim-interactive  # Launch the circuit builder
+```
+
+**What you get:**
+- 🎮 **Interactive TUI** — Build circuits visually with arrow keys + letter keys
+- 📊 **Live Metrics** — Depth, gate count, T-gate cost, entanglement detection
+- 🔍 **Pattern Recognition** — Identifies Bell, GHZ, and other known circuits
+- 📚 **Circuit Library** — Community circuits, searchable by difficulty/algorithm
+- 🔗 **25+ Gates** — H, X, CNOT, SWAP, Rx, Ry, Rz, Toffoli, etc.
+- 🐍 **Clean Python API** — Method chaining, Qiskit-compatible qubit convention
+- 💪 **2 Backends** — Kronecker (readable) + Tensor (scales to 20+ qubits)
+
+**Links:**
+- **[→ Full qcsim README](2026-05-circuit-simulator/reference/README.md)** — Complete guide to API, examples, TUI
+- **[→ Add a Gate](2026-05-circuit-simulator/reference/docs/adding-gates.md)** — 10-step guide to contributing new gates
+- **[→ Submit Circuits](circuit-library/CONTRIBUTING-CIRCUITS.md)** — Share your circuits in the community library
+- **[→ Interactive Builder](2026-05-circuit-simulator/reference#interactive-tui)** — How to use qcsim-interactive
+- **[→ Search Library](circuit-library/README.md)** — Browse & load community circuits
+
+**52 tests, Qiskit-compatible, zero dependencies (NumPy only).**
+
+---
+
+## 📅 Upcoming Challenges
+
+| Month | Challenge | Status |
+|-------|-----------|--------|
+| June 2026 | Algorithm Visualizer | *Design phase — details TBD* |
 
 ---
 
@@ -42,7 +84,7 @@ We're students, researchers, builders, and professionals learning quantum comput
 
 ---
 
-## How It Works
+## 📖 How It Works
 
 | Week | Activity |
 |------|----------|
@@ -50,13 +92,13 @@ We're students, researchers, builders, and professionals learning quantum comput
 | Weeks 2–3 | Build your solution in your own fork |
 | Week 4 | Post your submission in Discussions, get community feedback |
 
-## Difficulty Tiers
+### Difficulty Tiers
 
 - **Beginner** — core functionality, get something working
 - **Intermediate** — performance, clean API, full feature set
 - **Advanced** — optimization, novel extensions, research-level work
 
-## How to Submit
+### How to Submit
 
 1. Fork this repo
 2. Build your solution in your fork
@@ -67,12 +109,16 @@ No PRs needed. No merge conflicts. See [CONTRIBUTING.md](CONTRIBUTING.md) for fu
 
 ---
 
-## Challenges
+## 📞 Help & Resources
 
-| Month | Challenge | Folder |
-|-------|-----------|--------|
-| May 2026 | Quantum Circuit Simulator | [`2026-05-circuit-simulator/`](2026-05-circuit-simulator/) |
-| Jun 2026 | Algorithm Visualizer | [`2026-06-algorithm-visualizer/`](2026-06-algorithm-visualizer/) *(upcoming)* |
+| Need | Where |
+|------|-------|
+| Challenge questions | [GitHub Discussions / Q&A](../../discussions/categories/q-a) |
+| Code help | Discord `#code-help` |
+| Submit solution | [GitHub Discussions / Submissions](../../discussions/categories/submissions) |
+| Bug report | [GitHub Issues](../../issues) |
+| General FAQ | [docs/FAQ.md](docs/FAQ.md) |
+| Quantum basics | [Qiskit Textbook](https://qiskit.org/learn/) |
 
 ---
 
@@ -85,15 +131,35 @@ Top submissions each month featured on:
 
 ---
 
-## 📞 Get Help
+## 📁 Repository Structure
 
-| Need | Where |
-|------|-------|
-| Challenge questions | [GitHub Discussions / Q&A](../../discussions/categories/q-a) |
-| Code help | Discord `#code-help` |
-| Submit solution | [GitHub Discussions / Submissions](../../discussions/categories/submissions) |
-| Bug in challenge files | [GitHub Issues](../../issues) |
-| New here? | [docs/FAQ.md](docs/FAQ.md) |
+```
+Quantum-Collective-Monthly-Projects/
+├── 2026-05-circuit-simulator/           ← May 2026 Challenge (LIVE)
+│   ├── reference/                       ← qcsim package (pip install -e .)
+│   │   ├── qcsim/                      ← Core simulator
+│   │   ├── examples/                   ← Example circuits (Bell, GHZ, Deutsch-Jozza, Grover)
+│   │   ├── docs/adding-gates.md        ← How to add new gates
+│   │   ├── tests/                      ← 52 tests (core + Qiskit comparison)
+│   │   └── README.md                   ← Full qcsim guide
+│   ├── EXAMPLES.md                     ← Expected API patterns
+│   └── README.md                       ← May challenge description
+│
+├── 2026-06-algorithm-visualizer/        ← June 2026 Challenge (upcoming)
+│
+├── circuit-library/                     ← Community circuit library
+│   ├── examples/                       ← Verified circuits (Bell, GHZ, etc.)
+│   ├── search.py                       ← Search library by name/tags
+│   ├── add_circuit.py                  ← Submit circuits with dedup check
+│   ├── CONTRIBUTING-CIRCUITS.md        ← How to submit circuits
+│   └── README.md                       ← Library overview
+│
+├── docs/
+│   └── FAQ.md                          ← Frequently asked questions
+│
+├── CONTRIBUTING.md                     ← How to submit solutions
+└── README.md                           ← This file
+```
 
 ---
 
