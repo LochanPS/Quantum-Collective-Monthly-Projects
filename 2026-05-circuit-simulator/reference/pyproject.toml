@@ -23,6 +23,7 @@ addopts = "-v"
 
 [project.scripts]
 qcsim-interactive = "qcsim.tui:main"
+qcsim-search = "qcsim.search_cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

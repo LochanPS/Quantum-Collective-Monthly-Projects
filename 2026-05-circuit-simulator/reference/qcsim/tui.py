@@ -640,13 +640,54 @@ class CircuitBuilder:
 # ================================================================== #
 
 def main():
-    """Entry point for qcsim-interactive."""
-    try:
-        CircuitBuilder().run()
-    except KeyboardInterrupt:
-        _clear()
-        print("  Interrupted. Goodbye!")
-        sys.exit(0)
+    """Entry point for qcsim-interactive.
+
+    Usage:
+        qcsim-interactive                         # blank canvas
+        qcsim-interactive --load circuit.json     # pre-load a circuit
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="qcsim-interactive",
+        description="qcsim terminal circuit builder.",
+    )
+    parser.add_argument(
+        "--load",
+        metavar="FILE",
+        default=None,
+        help="Pre-load a circuit JSON file (from circuit-library or exported file).",
+    )
+    args = parser.parse_args()
+
+    builder = CircuitBuilder()
+
+    if args.load:
+        # Pre-load circuit: skip setup, go straight to builder
+        try:
+            with open(args.load) as f:
+                data = json.load(f)
+            builder.grid = CircuitGrid.from_json(data)
+            builder.backend = data.get("backend", "kronecker")
+            builder.cursor_row = 0
+            builder.cursor_col = 0
+            builder.mode = "NORMAL"
+            builder.status = f"Loaded: {data.get('name', 'circuit')}"
+            _clear()
+            builder._main_loop()
+        except FileNotFoundError:
+            print(f"  File not found: {args.load}")
+            sys.exit(1)
+        except Exception as exc:
+            print(f"  Error loading circuit: {exc}")
+            sys.exit(1)
+    else:
+        try:
+            builder.run()
+        except KeyboardInterrupt:
+            _clear()
+            print("  Interrupted. Goodbye!")
+            sys.exit(0)
 
 
 if __name__ == "__main__":
