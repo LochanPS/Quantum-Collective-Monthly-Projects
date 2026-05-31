@@ -22,8 +22,25 @@ works.
 
 ## Quick Start
 
+**Prerequisites:** Python 3.8+ and pip. That's it.
+
 ```bash
+# 1. Clone the repo
+git clone https://github.com/LochanPS/Quantum-Collective-Monthly-Projects.git
+cd Quantum-Collective-Monthly-Projects/2026-05-circuit-simulator/reference
+
+# 2. Install (editable mode — changes to source reflect immediately)
 pip install -e .
+
+# 3. Run the examples
+python examples/bell_state.py
+python examples/ghz_state.py
+python examples/deutsch_jozsa.py
+python examples/grover.py
+
+# 4. Run the tests
+pip install pytest
+pytest tests/ -v
 ```
 
 ```python
