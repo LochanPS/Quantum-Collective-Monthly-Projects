@@ -5,7 +5,7 @@
 
 ---
 
-## The Problem
+## The Challenge
 
 Build a quantum circuit simulator using the **state vector formalism**.
 
@@ -54,7 +54,7 @@ Up to 8 qubits.
 ### Advanced
 Pick one or more:
 
-- 15+ qubit support without building full 2^N × 2^N matrices (use tensor axis permutation)
+- 15+ qubit support without building full 2^N × 2^N matrices (tensor axis permutation)
 - GPU acceleration (CuPy / JAX)
 - Noise models (depolarizing, bit-flip)
 - Grover's algorithm or QFT as built-in examples
@@ -64,10 +64,43 @@ Pick one or more:
 
 ## Acceptance Criteria (all tiers)
 
-- [ ] Bell state: `H(0)` + `CNOT(0,1)` → `|00⟩` and `|11⟩` each at ~50%, no `|01⟩` or `|10⟩`
+- [ ] Bell state: `H(0)` + `CNOT(0,1)` → `|00⟩` and `|11⟩` each ~50%, no `|01⟩` or `|10⟩`
 - [ ] X gate: `X(0)|0⟩` → `|1⟩` with probability 1.0
 - [ ] Probabilities always sum to 1.0
 - [ ] Your fork includes tests that cover the above
+
+---
+
+## Reference Implementation
+
+A **complete, production-quality reference implementation** is available in this repo.
+
+**[→ qcsim/ — Full reference implementation](qcsim/README.md)**
+
+What it includes:
+- 25+ gates, dual backends (Kronecker + tensor), 52 passing tests
+- Interactive terminal circuit builder (`qcsim-interactive`)
+- Community circuit library with search + dedup
+- Pattern recognition, live circuit metrics, gate help overlays
+
+```bash
+cd qcsim
+pip install -e .
+qcsim-interactive        # Visual circuit builder
+python examples/bell_state.py
+pytest tests/ -v
+```
+
+Use it to:
+- **Learn** — read the code to understand how each piece works
+- **Compare** — check your implementation against known-correct outputs
+- **Extend** — add gates, circuits, visualizations on top of the reference
+
+---
+
+## Expected API
+
+See [`EXAMPLES.md`](EXAMPLES.md) for the expected usage patterns your implementation should match.
 
 ---
 
@@ -75,5 +108,5 @@ Pick one or more:
 
 - [Qiskit Textbook](https://qiskit.org/learn/) — free, interactive
 - [Quantum Computing: An Applied Approach](https://link.springer.com/book/10.1007/978-3-030-23922-0)
-- Starter code: [`starter-code/circuit.py`](starter-code/circuit.py)
-- Expected API: [`EXAMPLES.md`](EXAMPLES.md)
+- [Reference implementation](qcsim/README.md) — complete working simulator in this repo
+- [Circuit library](circuit-library/README.md) — community circuits to test against
