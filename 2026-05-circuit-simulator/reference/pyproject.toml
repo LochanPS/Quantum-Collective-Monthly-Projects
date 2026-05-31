@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qcsim"
+version = "0.1.0"
+description = "Quantum circuit simulator — Quantum Collective Monthly Project #1"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "Apache-2.0"}
+authors = [{name = "Quantum Collective"}]
+keywords = ["quantum", "simulator", "circuit", "qubits"]
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-cov"]
+qiskit = ["qiskit>=1.0", "qiskit-aer>=0.14"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["qcsim*"]
