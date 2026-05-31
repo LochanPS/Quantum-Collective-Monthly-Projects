@@ -1,0 +1,17 @@
+{
+  "name": "GHZ State (3 qubits)",
+  "description": "Greenberger-Horne-Zeilinger state: (|000> + |111>) / sqrt(2). 3-qubit maximal entanglement.",
+  "author": "Quantum Collective",
+  "tags": ["entanglement", "beginner", "ghz"],
+  "num_qubits": 3,
+  "num_cols": 4,
+  "backend": "kronecker",
+  "gates": [
+    {"gate": "H",      "row": 0, "col": 0},
+    {"gate": "CNOT_C", "row": 0, "col": 1, "linked_row": 1},
+    {"gate": "CNOT_T", "row": 1, "col": 1, "linked_row": 0},
+    {"gate": "CNOT_C", "row": 1, "col": 2, "linked_row": 2},
+    {"gate": "CNOT_T", "row": 2, "col": 2, "linked_row": 1}
+  ],
+  "fingerprint": "b2c3d4e5f6a7b8c9"
+}

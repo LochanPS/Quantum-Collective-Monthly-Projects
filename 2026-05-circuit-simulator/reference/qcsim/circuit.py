@@ -55,20 +55,26 @@ class QuantumCircuit:
         >>> print(qc.measure_all(shots=1000))
     """
 
-    def __init__(self, num_qubits: int) -> None:
+    def __init__(self, num_qubits: int, backend: str = "kronecker") -> None:
         """Create a circuit with all qubits initialised to |0⟩.
 
         Args:
             num_qubits: Number of qubits. Must be between 1 and 20.
+            backend: Simulation method. 'kronecker' (default, readable) or
+                'tensor' (faster for large circuits, no full matrix built).
 
         Raises:
             QubitIndexError: If num_qubits is outside the valid range.
+            ValueError: If backend is not 'kronecker' or 'tensor'.
         """
         if not (1 <= num_qubits <= _MAX_QUBITS):
             raise QubitIndexError(
                 f"num_qubits must be between 1 and {_MAX_QUBITS}, got {num_qubits}."
             )
+        if backend not in ("kronecker", "tensor"):
+            raise ValueError(f"backend must be 'kronecker' or 'tensor', got '{backend}'.")
         self.num_qubits = num_qubits
+        self.backend = backend
         self._state = QuantumState(num_qubits)
         self._log: List[GateEntry] = []  # (name, qubit_list, params_dict)
 
@@ -222,6 +228,143 @@ class QuantumCircuit:
         self._state.set(U @ sv)
 
     # ================================================================== #
+    #  Tensor backend — no full matrix built, O(2^N) per gate
+    # ================================================================== #
+
+    def _tensor_single(self, gate: np.ndarray, qubit: int) -> None:
+        """Apply a 2x2 gate via tensor axis permutation (tensor backend).
+
+        Reshapes the state vector to (2,)*N, contracts along the target
+        qubit's axis, then reshapes back. Avoids building the 2^N×2^N matrix.
+
+        Args:
+            gate: 2x2 gate matrix.
+            qubit: Target qubit index (LSB: axis = N-1-qubit).
+        """
+        n = self.num_qubits
+        sv = self._state.amplitudes().reshape([2] * n)
+        axis = n - 1 - qubit
+        sv = np.tensordot(gate, sv, axes=[[1], [axis]])
+        sv = np.moveaxis(sv, 0, axis)
+        self._state.set(sv.reshape(2 ** n))
+
+    def _tensor_cnot(self, ctrl: int, tgt: int) -> None:
+        """Apply CNOT via tensor slicing (tensor backend).
+
+        Selects the ctrl=1 slice of the state tensor and flips the target
+        axis within that slice. No matrix construction at all.
+
+        Args:
+            ctrl: Control qubit index.
+            tgt: Target qubit index.
+        """
+        n = self.num_qubits
+        sv = self._state.amplitudes().reshape([2] * n)
+        ctrl_ax = n - 1 - ctrl
+        tgt_ax = n - 1 - tgt
+
+        # Index that selects ctrl=1 across all other axes
+        idx: List = [slice(None)] * n
+        idx[ctrl_ax] = 1
+        sv_ctrl1 = sv[tuple(idx)]
+
+        # In the ctrl=1 slice (n-1 dims), find the adjusted target axis
+        adj_tgt = tgt_ax if tgt_ax < ctrl_ax else tgt_ax - 1
+        sv[tuple(idx)] = np.flip(sv_ctrl1, axis=adj_tgt).copy()
+        self._state.set(sv.reshape(2 ** n))
+
+    def _tensor_swap(self, a: int, b: int) -> None:
+        """Apply SWAP via np.swapaxes (tensor backend).
+
+        Swapping two qubit axes in the tensor IS the SWAP gate.
+
+        Args:
+            a: First qubit index.
+            b: Second qubit index.
+        """
+        n = self.num_qubits
+        sv = self._state.amplitudes().reshape([2] * n)
+        sv = np.swapaxes(sv, n - 1 - a, n - 1 - b)
+        self._state.set(sv.reshape(2 ** n).copy())
+
+    def _tensor_toffoli(self, ctrl0: int, ctrl1: int, tgt: int) -> None:
+        """Apply Toffoli via tensor slicing (tensor backend).
+
+        Selects the ctrl0=1, ctrl1=1 slice and flips the target axis.
+
+        Args:
+            ctrl0: First control qubit index.
+            ctrl1: Second control qubit index.
+            tgt: Target qubit index.
+        """
+        n = self.num_qubits
+        sv = self._state.amplitudes().reshape([2] * n)
+        c0_ax = n - 1 - ctrl0
+        c1_ax = n - 1 - ctrl1
+        tgt_ax = n - 1 - tgt
+
+        idx: List = [slice(None)] * n
+        idx[c0_ax] = 1
+        idx[c1_ax] = 1
+        sv_slice = sv[tuple(idx)]
+
+        # Adjust tgt_ax for the two removed axes
+        adj = tgt_ax
+        for removed in sorted([c0_ax, c1_ax]):
+            if removed < adj:
+                adj -= 1
+
+        sv[tuple(idx)] = np.flip(sv_slice, axis=adj).copy()
+        self._state.set(sv.reshape(2 ** n))
+
+    def _gate_single(self, gate: np.ndarray, qubit: int) -> None:
+        """Dispatch single-qubit gate to the active backend."""
+        if self.backend == "tensor":
+            self._tensor_single(gate, qubit)
+        else:
+            self._apply(self._expand_single(gate, qubit))
+
+    def _gate_cnot(self, ctrl: int, tgt: int) -> None:
+        """Dispatch CNOT to the active backend."""
+        if self.backend == "tensor":
+            self._tensor_cnot(ctrl, tgt)
+        else:
+            self._apply(self._expand_controlled(G.X(), ctrl, tgt))
+
+    def _gate_swap(self, a: int, b: int) -> None:
+        """Dispatch SWAP to the active backend."""
+        if self.backend == "tensor":
+            self._tensor_swap(a, b)
+        else:
+            self._apply(self._expand_swap(a, b))
+
+    def _gate_controlled(self, gate: np.ndarray, ctrl: int, tgt: int) -> None:
+        """Dispatch generic controlled gate to the active backend."""
+        if self.backend == "tensor":
+            # Generic controlled: apply gate to tgt slice where ctrl=1
+            n = self.num_qubits
+            sv = self._state.amplitudes().reshape([2] * n)
+            ctrl_ax = n - 1 - ctrl
+            tgt_ax = n - 1 - tgt
+            idx: List = [slice(None)] * n
+            idx[ctrl_ax] = 1
+            sv_ctrl1 = sv[tuple(idx)]
+            adj_tgt = tgt_ax if tgt_ax < ctrl_ax else tgt_ax - 1
+            sv_ctrl1 = np.tensordot(gate, sv_ctrl1, axes=[[1], [adj_tgt]])
+            sv_ctrl1 = np.moveaxis(sv_ctrl1, 0, adj_tgt)
+            sv[tuple(idx)] = sv_ctrl1
+            self._state.set(sv.reshape(2 ** n))
+        else:
+            self._apply(self._expand_controlled(gate, ctrl, tgt))
+
+    def _gate_toffoli(self, c0: int, c1: int, tgt: int) -> None:
+        """Dispatch Toffoli to the active backend."""
+        if self.backend == "tensor":
+            self._tensor_toffoli(c0, c1, tgt)
+        else:
+            self._apply(self._expand_toffoli(c0, c1, tgt))
+
+    # ================================================================== #
     #  Single-qubit gates
     # ================================================================== #
 
@@ -256,7 +399,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.H(), qubit))
+        self._gate_single(G.H(), qubit)
         self._log.append(("H", [qubit], None))
         return self
 
@@ -273,7 +416,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.X(), qubit))
+        self._gate_single(G.X(), qubit)
         self._log.append(("X", [qubit], None))
         return self
 
@@ -290,7 +433,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.Y(), qubit))
+        self._gate_single(G.Y(), qubit)
         self._log.append(("Y", [qubit], None))
         return self
 
@@ -307,7 +450,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.Z(), qubit))
+        self._gate_single(G.Z(), qubit)
         self._log.append(("Z", [qubit], None))
         return self
 
@@ -324,7 +467,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.S(), qubit))
+        self._gate_single(G.S(), qubit)
         self._log.append(("S", [qubit], None))
         return self
 
@@ -341,7 +484,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.Sdg(), qubit))
+        self._gate_single(G.Sdg(), qubit)
         self._log.append(("Sdg", [qubit], None))
         return self
 
@@ -358,7 +501,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.T(), qubit))
+        self._gate_single(G.T(), qubit)
         self._log.append(("T", [qubit], None))
         return self
 
@@ -375,7 +518,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.Tdg(), qubit))
+        self._gate_single(G.Tdg(), qubit)
         self._log.append(("Tdg", [qubit], None))
         return self
 
@@ -392,7 +535,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.SX(), qubit))
+        self._gate_single(G.SX(), qubit)
         self._log.append(("SX", [qubit], None))
         return self
 
@@ -414,7 +557,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.Rx(theta), qubit))
+        self._gate_single(G.Rx(theta), qubit)
         self._log.append(("Rx", [qubit], {"theta": theta}))
         return self
 
@@ -432,7 +575,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.Ry(theta), qubit))
+        self._gate_single(G.Ry(theta), qubit)
         self._log.append(("Ry", [qubit], {"theta": theta}))
         return self
 
@@ -450,7 +593,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.Rz(theta), qubit))
+        self._gate_single(G.Rz(theta), qubit)
         self._log.append(("Rz", [qubit], {"theta": theta}))
         return self
 
@@ -468,7 +611,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.P(lam), qubit))
+        self._gate_single(G.P(lam), qubit)
         self._log.append(("P", [qubit], {"lam": lam}))
         return self
 
@@ -488,7 +631,7 @@ class QuantumCircuit:
             QubitIndexError: If the qubit index is out of range.
         """
         self._check(qubit)
-        self._apply(self._expand_single(G.U(theta, phi, lam), qubit))
+        self._gate_single(G.U(theta, phi, lam), qubit)
         self._log.append(("U", [qubit], {"theta": theta, "phi": phi, "lam": lam}))
         return self
 
@@ -512,7 +655,7 @@ class QuantumCircuit:
         self._check(control, "control")
         self._check(target, "target")
         self._check_distinct(control, target)
-        self._apply(self._expand_controlled(G.X(), control, target))
+        self._gate_cnot(control, target)
         self._log.append(("CNOT", [control, target], None))
         return self
 
@@ -535,7 +678,7 @@ class QuantumCircuit:
         self._check(control, "control")
         self._check(target, "target")
         self._check_distinct(control, target)
-        self._apply(self._expand_controlled(G.Y(), control, target))
+        self._gate_controlled(G.Y(), control, target)
         self._log.append(("CY", [control, target], None))
         return self
 
@@ -555,7 +698,7 @@ class QuantumCircuit:
         self._check(control, "control")
         self._check(target, "target")
         self._check_distinct(control, target)
-        self._apply(self._expand_controlled(G.Z(), control, target))
+        self._gate_controlled(G.Z(), control, target)
         self._log.append(("CZ", [control, target], None))
         return self
 
@@ -575,7 +718,7 @@ class QuantumCircuit:
         self._check(a, "qubit a")
         self._check(b, "qubit b")
         self._check_distinct(a, b)
-        self._apply(self._expand_swap(a, b))
+        self._gate_swap(a, b)
         self._log.append(("SWAP", [a, b], None))
         return self
 
@@ -596,7 +739,7 @@ class QuantumCircuit:
         self._check(control, "control")
         self._check(target, "target")
         self._check_distinct(control, target)
-        self._apply(self._expand_controlled(G.P(lam), control, target))
+        self._gate_controlled(G.P(lam), control, target)
         self._log.append(("CP", [control, target], {"lam": lam}))
         return self
 
@@ -622,7 +765,7 @@ class QuantumCircuit:
         self._check(ctrl1, "ctrl1")
         self._check(target, "target")
         self._check_distinct(ctrl0, ctrl1, target)
-        self._apply(self._expand_toffoli(ctrl0, ctrl1, target))
+        self._gate_toffoli(ctrl0, ctrl1, target)
         self._log.append(("CCX", [ctrl0, ctrl1, target], None))
         return self
 

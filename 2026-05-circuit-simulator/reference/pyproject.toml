@@ -21,6 +21,9 @@ qiskit = ["qiskit>=1.0", "qiskit-aer>=0.14"]
 testpaths = ["tests"]
 addopts = "-v"
 
+[project.scripts]
+qcsim-interactive = "qcsim.tui:main"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["qcsim*"]

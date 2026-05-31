@@ -1,0 +1,21 @@
+{
+  "_comment": "Auto-maintained index of all circuits in the library. Do not edit manually — use add_circuit.py.",
+  "circuits": [
+    {
+      "file": "examples/bell-state.json",
+      "name": "Bell State",
+      "num_qubits": 2,
+      "tags": ["entanglement", "beginner", "fundamental"],
+      "fingerprint": "a1b2c3d4e5f6a7b8",
+      "author": "Quantum Collective"
+    },
+    {
+      "file": "examples/ghz-3.json",
+      "name": "GHZ State (3 qubits)",
+      "num_qubits": 3,
+      "tags": ["entanglement", "beginner", "ghz"],
+      "fingerprint": "b2c3d4e5f6a7b8c9",
+      "author": "Quantum Collective"
+    }
+  ]
+}
