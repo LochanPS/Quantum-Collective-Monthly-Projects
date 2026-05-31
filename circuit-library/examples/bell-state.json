@@ -1,10 +1,17 @@
 {
   "name": "Bell State",
+  "version": "1.0",
   "description": "2-qubit maximally entangled state: (|00> + |11>) / sqrt(2). Foundation of quantum teleportation and superdense coding.",
   "author": "Quantum Collective",
-  "tags": ["entanglement", "beginner", "fundamental"],
+  "created_at": "2026-05-31",
+  "category": "entanglement",
+  "difficulty": "beginner",
+  "tags": ["entanglement", "beginner", "fundamental", "bell"],
+  "source_url": "https://en.wikipedia.org/wiki/Bell_state",
+  "verified": true,
   "num_qubits": 2,
   "num_cols": 3,
+  "num_gates": 2,
   "backend": "kronecker",
   "gates": [
     {"gate": "H",      "row": 0, "col": 0},

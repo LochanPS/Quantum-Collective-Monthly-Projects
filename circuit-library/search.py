@@ -69,6 +69,9 @@ def search_circuits(
     tags: Optional[List[str]] = None,
     qubits: Optional[int] = None,
     author: Optional[str] = None,
+    category: Optional[str] = None,
+    difficulty: Optional[str] = None,
+    verified_only: bool = False,
 ) -> List[dict]:
     """Filter circuits by query, tags, qubit count, or author.
 
@@ -99,6 +102,15 @@ def search_circuits(
     if author:
         a = author.lower()
         results = [c for c in results if a in c.get("author", "").lower()]
+
+    if category:
+        results = [c for c in results if c.get("category", "").lower() == category.lower()]
+
+    if difficulty:
+        results = [c for c in results if c.get("difficulty", "").lower() == difficulty.lower()]
+
+    if verified_only:
+        results = [c for c in results if c.get("verified", False)]
 
     return results
 
@@ -267,6 +279,9 @@ Examples:
     parser.add_argument("--tags", nargs="+", metavar="TAG", help="Filter by tags (all must match).")
     parser.add_argument("--qubits", type=int, metavar="N", help="Filter by exact qubit count.")
     parser.add_argument("--author", metavar="NAME", help="Filter by author (substring).")
+    parser.add_argument("--category", metavar="CAT", help="Filter by category (entanglement, algorithm, education, ...).")
+    parser.add_argument("--difficulty", metavar="DIFF", help="Filter by difficulty (beginner, intermediate, advanced).")
+    parser.add_argument("--verified", action="store_true", help="Show only verified circuits.")
     parser.add_argument("--load", action="store_true", help="Load selected circuit into qcsim TUI.")
     parser.add_argument("--list-tags", action="store_true", help="List all available tags.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Show descriptions and fingerprints.")
@@ -290,8 +305,8 @@ Examples:
         print()
         return
 
-    if not any([args.query, args.tags, args.qubits, args.author]):
-        # No filters → show all
+    if not any([args.query, args.tags, args.qubits, args.author,
+                args.category, args.difficulty, args.verified]):
         results = all_circuits
         print(f"\n  All circuits in library ({len(results)} total):")
     else:
@@ -301,6 +316,9 @@ Examples:
             tags=args.tags,
             qubits=args.qubits,
             author=args.author,
+            category=args.category,
+            difficulty=args.difficulty,
+            verified_only=args.verified,
         )
         print(f"\n  Search results ({len(results)} found):")
 

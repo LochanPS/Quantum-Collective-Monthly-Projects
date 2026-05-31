@@ -1,0 +1,17 @@
+{
+  "_comment": "Fingerprints of well-known quantum circuit patterns. Used by qcsim pattern recognition.",
+  "patterns": [
+    {
+      "name": "Bell State",
+      "fingerprint": "a1b2c3d4e5f6a7b8",
+      "description": "Maximally entangled 2-qubit state: (|00> + |11>) / sqrt(2)",
+      "tags": ["entanglement", "fundamental"]
+    },
+    {
+      "name": "GHZ State (3 qubits)",
+      "fingerprint": "b2c3d4e5f6a7b8c9",
+      "description": "3-qubit maximal entanglement: (|000> + |111>) / sqrt(2)",
+      "tags": ["entanglement", "ghz"]
+    }
+  ]
+}

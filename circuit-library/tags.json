@@ -1,0 +1,27 @@
+{
+  "_comment": "Canonical tag list. add_circuit.py rejects tags not in this list. Open a PR to add new tags.",
+  "tags": {
+    "beginner":          "Suitable for people new to quantum computing",
+    "intermediate":      "Requires understanding of basic quantum gates",
+    "advanced":          "Requires deeper quantum computing knowledge",
+    "fundamental":       "A foundational circuit every quantum practitioner should know",
+    "entanglement":      "Creates or manipulates entangled quantum states",
+    "superposition":     "Creates or demonstrates quantum superposition",
+    "ghz":               "Greenberger-Horne-Zeilinger multi-qubit entangled state",
+    "bell":              "Bell state or Bell basis related circuit",
+    "teleportation":     "Quantum teleportation protocol",
+    "algorithm":         "Implements a known quantum algorithm",
+    "grover":            "Grover's search algorithm",
+    "deutsch-jozsa":     "Deutsch-Jozsa algorithm",
+    "qft":               "Quantum Fourier Transform",
+    "error-correction":  "Quantum error correction circuit",
+    "noise":             "Noisy or error-prone circuit",
+    "phase":             "Phase manipulation or phase estimation",
+    "rotation":          "Uses parametric rotation gates (Rx, Ry, Rz)",
+    "swap":              "SWAP-heavy circuit for qubit routing",
+    "toffoli":           "Uses the Toffoli (CCX) gate",
+    "education":         "Built primarily for learning and demonstration",
+    "benchmark":         "Useful for benchmarking simulator performance",
+    "research":          "Implements a research-level circuit"
+  }
+}

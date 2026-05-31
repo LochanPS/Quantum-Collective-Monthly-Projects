@@ -16,12 +16,17 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import signal
+import shutil
 import sys
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 from .circuit import QuantumCircuit
 from .visualize import draw_histogram, draw_statevector
+from .analyzer import analyze_grid
+from .patterns import recognize_grid
+from .fingerprint import compute as compute_fingerprint
 
 # ================================================================== #
 #  Cross-platform keyboard input
@@ -177,12 +182,7 @@ class CircuitGrid:
             "backend": backend,
             "gates": gates,
         }
-        raw = json.dumps(
-            {"gates": sorted(gates, key=lambda g: (g["col"], g["row"])),
-             "num_qubits": self.num_qubits},
-            sort_keys=True,
-        )
-        data["fingerprint"] = hashlib.sha256(raw.encode()).hexdigest()[:16]
+        data["fingerprint"] = compute_fingerprint(gates, self.num_qubits)
         return data
 
     @classmethod
@@ -258,6 +258,11 @@ def _render_grid(
 
     lines.append("")
 
+    # Info panel — live circuit metrics
+    metrics = analyze_grid(grid)
+    lines.append(metrics.summary_line())
+    lines.append("")
+
     # Mode / status line
     mode_labels = {
         "NORMAL":      "NORMAL",
@@ -271,7 +276,7 @@ def _render_grid(
     lines.append("")
 
     # Help
-    lines.append("  Gates : [H] [X] [C]NOT [W]AP  |  [Backspace] delete")
+    lines.append("  Gates : [H] [X] [C]NOT [W]AP  |  [Backspace] delete  |  [?] gate help")
     lines.append("  Action: [R]un  [E]xport  [I]mport  [Esc] reset  [Q]uit")
     lines.append("  Move  : Arrow keys")
 
@@ -294,6 +299,7 @@ class CircuitBuilder:
         self.pending_row: int = -1
         self.pending_col: int = -1
         self.status: str = ""
+        self._resize_flag: bool = False  # set by SIGWINCH handler
 
     # ------------------------------------------------------------------ #
     #  Entry point
@@ -301,8 +307,30 @@ class CircuitBuilder:
 
     def run(self):
         _clear()
+        self._register_resize_handler()
+        self._check_terminal_size()
         self._setup()
         self._main_loop()
+
+    def _register_resize_handler(self):
+        """Register SIGWINCH handler on Unix for terminal resize events."""
+        if os.name != "nt":
+            try:
+                signal.signal(signal.SIGWINCH, self._on_resize)
+            except (AttributeError, OSError):
+                pass  # not available on all platforms
+
+    def _on_resize(self, signum, frame):
+        """Called when terminal is resized (Unix only)."""
+        self._resize_flag = True
+
+    def _check_terminal_size(self):
+        """Warn if terminal is smaller than the recommended minimum."""
+        cols, rows = shutil.get_terminal_size(fallback=(80, 24))
+        if cols < 80 or rows < 20:
+            print(f"  Warning: terminal is {cols}x{rows}. Recommend 80x24 minimum.")
+            print(f"  Resize your terminal for best experience.")
+            print()
 
     # ------------------------------------------------------------------ #
     #  Setup
@@ -355,6 +383,11 @@ class CircuitBuilder:
 
     def _main_loop(self):
         while True:
+            # Handle terminal resize (Unix SIGWINCH)
+            if self._resize_flag:
+                self._resize_flag = False
+                self._check_terminal_size()
+
             _clear()
             print(
                 _render_grid(
@@ -399,6 +432,10 @@ class CircuitBuilder:
         # Delete
         elif key == "backspace":
             self._delete()
+
+        # Gate help
+        elif key == "?":
+            self._gate_help()
 
         # Actions
         elif key == "r":
@@ -529,6 +566,102 @@ class CircuitBuilder:
         return qc
 
     # ------------------------------------------------------------------ #
+    #  Gate help overlay
+    # ------------------------------------------------------------------ #
+
+    def _gate_help(self):
+        """Show a help overlay for the gate at the current cursor position."""
+        cell = self.grid.get(self.cursor_row, self.cursor_col)
+        gate = cell.gate
+        _clear()
+
+        _GATE_HELP = {
+            "H": (
+                "Hadamard Gate",
+                "Matrix: [[1, 1], [1, -1]] / sqrt(2)",
+                "H|0> = (|0> + |1>) / sqrt(2)  -- superposition",
+                "H|1> = (|0> - |1>) / sqrt(2)  -- superposition",
+                "H*H = Identity  (applying twice returns to original state)",
+                "",
+                "Use: Starting point of nearly every quantum algorithm.",
+                "     Creates the quantum parallelism that gives QC its power.",
+            ),
+            "X": (
+                "Pauli-X Gate (NOT gate)",
+                "Matrix: [[0, 1], [1, 0]]",
+                "X|0> = |1>",
+                "X|1> = |0>",
+                "X*X = Identity",
+                "",
+                "Use: Initialise qubits to |1>, flip bits, build CNOT.",
+            ),
+            "CNOT_C": (
+                "CNOT Gate — Control qubit (@)",
+                "4x4 matrix acting on 2 qubits.",
+                "Flips the target qubit when this control qubit is |1>.",
+                "",
+                "  |00> -> |00>   (control=0, target unchanged)",
+                "  |01> -> |01>",
+                "  |10> -> |11>   (control=1, target flipped)",
+                "  |11> -> |10>",
+                "",
+                "Use: Creates entanglement. Foundation of quantum teleportation.",
+                "     Together with H, produces all Bell states.",
+                "",
+                f"  This is the CONTROL qubit. Linked to q[{cell.linked_row}] (target).",
+            ),
+            "CNOT_T": (
+                "CNOT Gate — Target qubit (+)",
+                "This qubit is flipped when the control qubit is |1>.",
+                f"  Linked control: q[{cell.linked_row}]",
+                "",
+                "See control qubit (@) for full gate description.",
+            ),
+            "SWAP_A": (
+                "SWAP Gate",
+                "Exchanges the quantum states of two qubits completely.",
+                "",
+                "  |01> -> |10>",
+                "  |10> -> |01>",
+                "  SWAP(SWAP(a,b)) = identity",
+                "",
+                "Use: Routing qubits on hardware with limited connectivity.",
+                f"  Swapping with q[{cell.linked_row}].",
+            ),
+            "SWAP_B": (
+                "SWAP Gate — second qubit",
+                f"  Swapping with q[{cell.linked_row}].",
+                "See first SWAP qubit for full description.",
+            ),
+            "": (
+                "Empty Cell",
+                f"  Position: q[{self.cursor_row}], col {self.cursor_col}",
+                "",
+                "Place a gate here:",
+                "  [H]  Hadamard          creates superposition",
+                "  [X]  Pauli-X           flips the qubit (NOT gate)",
+                "  [C]  CNOT              controlled-NOT (two-qubit entanglement)",
+                "  [W]  SWAP              exchange two qubit states",
+                "",
+                "Navigate with arrow keys. [Backspace] to delete.",
+            ),
+        }
+
+        title, *body = _GATE_HELP.get(gate, ("Unknown gate", f"Gate: {gate!r}"))
+
+        width = 56
+        border = "  +" + "-" * width + "+"
+        print(border)
+        print(f"  | {title.center(width - 2)} |")
+        print(border)
+        for line in body:
+            padded = line[:width - 2].ljust(width - 2)
+            print(f"  | {padded} |")
+        print(border)
+        print()
+        _input("  Press Enter to return to builder...")
+
+    # ------------------------------------------------------------------ #
     #  Run
     # ------------------------------------------------------------------ #
 
@@ -542,9 +675,18 @@ class CircuitBuilder:
             counts = qc.measure_all(shots=2048)
             hist_str = draw_histogram(counts, shots=2048)
 
+            # Pattern recognition
+            pattern = recognize_grid(self.grid)
+
             _clear()
             print(circ_str)
             print()
+            if pattern:
+                width = 54
+                print(f"  +{'-'*width}+")
+                print(f"  | {'Pattern recognized: ' + pattern:^{width-2}} |")
+                print(f"  +{'-'*width}+")
+                print()
             print(sv_str)
             print()
             print(hist_str)
@@ -552,6 +694,8 @@ class CircuitBuilder:
             print(f"  {qc.summary()}")
         except Exception as exc:
             print(f"  Simulation error: {exc}")
+            import traceback
+            traceback.print_exc()
 
         print()
         _input("  Press Enter to return to builder...")
