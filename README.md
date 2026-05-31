@@ -80,7 +80,7 @@ pip install -e . && qcsim-interactive
 | Month | Challenge | Status | Folder |
 |-------|-----------|--------|--------|
 | May 2026 | Quantum Circuit Simulator | ✅ Live | [`2026-05-circuit-simulator/`](2026-05-circuit-simulator/) |
-| June 2026 | Algorithm Visualizer | 🔜 Coming soon | [`2026-06-algorithm-visualizer/`](2026-06-algorithm-visualizer/) |
+| July 2026 | Algorithm Visualizer | 🔜 Details July 1 | [`2026-06-algorithm-visualizer/`](2026-06-algorithm-visualizer/) |
 
 ---
 
