@@ -1,24 +1,27 @@
 ---
 name: Challenge Idea / Extension
-about: Suggest an extension to the current challenge or a future month topic
+about: Suggest a new gate, circuit, extension, or future challenge topic
 title: "[IDEA] "
 labels: enhancement
 ---
 
 ## What do you want to add or change?
 
-## Why is this valuable?
+## Why is this valuable to the community?
 
-## Tier
+## Category
+
+- [ ] New gate for qcsim
+- [ ] New circuit for the library
+- [ ] Extension to the simulator (noise, GPU, Bloch sphere, etc.)
+- [ ] Future month challenge idea
+- [ ] Tooling / CI / docs improvement
+
+## Difficulty
 
 - [ ] Beginner
 - [ ] Intermediate
 - [ ] Advanced
-
-## Current challenge or future month?
-
-- [ ] Current (May 2026 — Quantum Circuit Simulator)
-- [ ] Future month idea
 
 ## Acceptance criteria
 

@@ -48,7 +48,7 @@ here from scratch so you can read, understand, and extend it.
 ```bash
 # 1. Clone the repo
 git clone https://github.com/LochanPS/Quantum-Collective-Monthly-Projects.git
-cd Quantum-Collective-Monthly-Projects/2026-05-circuit-simulator/reference
+cd Quantum-Collective-Monthly-Projects/2026-05-circuit-simulator/qcsim
 
 # 2. Install (editable mode — changes to source reflect immediately)
 pip install -e .
@@ -134,7 +134,7 @@ qcsim-interactive
 
 **Pre-load a circuit:**
 ```bash
-qcsim-interactive --load circuit-library/examples/bell-state.json
+qcsim-interactive --load ../circuit-library/examples/bell-state.json
 ```
 
 ---
@@ -301,11 +301,11 @@ and gate help text.
 qcsim-interactive
 # Build your circuit → press E to export
 
-# 2. Submit to library
-python circuit-library/add_circuit.py my-circuit.json
+# 2. Submit to library (from repo root)
+python 2026-05-circuit-simulator/circuit-library/add_circuit.py my-circuit.json
 
 # 3. Open a PR
-git add circuit-library/
+git add 2026-05-circuit-simulator/circuit-library/
 git commit -m "feat(library): add My Circuit Name"
 git push
 ```
@@ -321,11 +321,11 @@ Covers:
 
 **Search the library:**
 ```bash
-python circuit-library/search.py                    # Show all
-python circuit-library/search.py ghz                # Search by name
-python circuit-library/search.py --difficulty beginner  # By difficulty
-python circuit-library/search.py --verified         # Only verified circuits
-python circuit-library/search.py bell --load        # Search and open
+python ../circuit-library/search.py                    # Show all
+python ../circuit-library/search.py ghz                # Search by name
+python ../circuit-library/search.py --difficulty beginner  # By difficulty
+python ../circuit-library/search.py --verified         # Only verified circuits
+python ../circuit-library/search.py bell --load        # Search and open
 ```
 
 ---
@@ -359,43 +359,41 @@ pytest tests/test_vs_qiskit.py -v
 ## Module Structure
 
 ```
-reference/
-├── qcsim/
-│   ├── __init__.py           Public API surface
-│   ├── circuit.py            QuantumCircuit — main simulation engine
-│   ├── state.py              QuantumState — state vector storage
-│   ├── gates.py              All gate matrices (H, X, Y, Z, Rx, ...)
-│   ├── analyzer.py           Circuit metrics (depth, gate count, T-cost)
-│   ├── fingerprint.py        Normalized circuit fingerprinting
-│   ├── patterns.py           Pattern recognition (Bell, GHZ, ...)
-│   ├── visualize.py          ASCII diagrams, histograms, statevectors
-│   ├── tui.py                Interactive terminal circuit builder
-│   ├── search_cli.py         Entry point for qcsim-search
-│   └── exceptions.py         Custom exception hierarchy
-├── examples/
-│   ├── bell_state.py         Bell state circuit
-│   ├── ghz_state.py          GHZ state (5-qubit)
-│   ├── deutsch_jozsa.py      Deutsch-Jozsa algorithm
-│   └── grover.py             Grover search
-├── tests/
-│   ├── test_circuit.py       52 tests — core functionality
-│   └── test_vs_qiskit.py     Optional Qiskit comparison
-├── docs/
-│   └── adding-gates.md       Complete guide to adding new gates
-└── README.md                 This file
-```
-
-Top-level (parent directory):
-```
-circuit-library/
-├── examples/                 Bell state, GHZ, and other verified circuits
-├── known_patterns.json       Fingerprints for pattern recognition
-├── tags.json                 Canonical tag list (beginner, entanglement, etc.)
-├── index.json                Auto-maintained circuit manifest
-├── search.py                 Search library by name/tags/difficulty
-├── add_circuit.py            Submit a circuit with deduplication
-├── check_duplicates.py       CI gate — prevents duplicate submissions
-└── CONTRIBUTING-CIRCUITS.md  Full guide to submitting circuits
+2026-05-circuit-simulator/
+├── qcsim/                        ← this package (pip install -e .)
+│   ├── qcsim/
+│   │   ├── __init__.py           Public API surface
+│   │   ├── circuit.py            QuantumCircuit — main simulation engine
+│   │   ├── state.py              QuantumState — state vector storage
+│   │   ├── gates.py              All gate matrices (H, X, Y, Z, Rx, ...)
+│   │   ├── analyzer.py           Circuit metrics (depth, gate count, T-cost)
+│   │   ├── fingerprint.py        Normalized circuit fingerprinting
+│   │   ├── patterns.py           Pattern recognition (Bell, GHZ, ...)
+│   │   ├── visualize.py          ASCII diagrams, histograms, statevectors
+│   │   ├── tui.py                Interactive terminal circuit builder
+│   │   ├── search_cli.py         Entry point for qcsim-search
+│   │   └── exceptions.py         Custom exception hierarchy
+│   ├── examples/
+│   │   ├── bell_state.py         Bell state circuit
+│   │   ├── ghz_state.py          GHZ state (5-qubit)
+│   │   ├── deutsch_jozsa.py      Deutsch-Jozsa algorithm
+│   │   └── grover.py             Grover search
+│   ├── tests/
+│   │   ├── test_circuit.py       52 tests — core functionality
+│   │   └── test_vs_qiskit.py     Optional Qiskit comparison
+│   ├── docs/
+│   │   └── adding-gates.md       Complete guide to adding new gates
+│   └── README.md                 This file
+│
+└── circuit-library/              ← community circuit library (sibling to qcsim)
+    ├── examples/                 Bell state, GHZ, and other verified circuits
+    ├── known_patterns.json       Fingerprints for pattern recognition
+    ├── tags.json                 Canonical tag list
+    ├── index.json                Auto-maintained circuit manifest
+    ├── search.py                 Search by name/tags/difficulty
+    ├── add_circuit.py            Submit with deduplication
+    ├── check_duplicates.py       CI gate — prevents duplicate submissions
+    └── CONTRIBUTING-CIRCUITS.md  Full guide to submitting circuits
 ```
 
 ---

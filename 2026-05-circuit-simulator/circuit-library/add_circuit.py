@@ -30,7 +30,9 @@ from pathlib import Path
 
 # Use normalized fingerprint from qcsim if available, else fallback
 try:
-    sys.path.insert(0, str(Path(__file__).parent.parent / "2026-05-circuit-simulator" / "reference"))
+    # __file__ = .../2026-05-circuit-simulator/circuit-library/add_circuit.py
+    # parent.parent = .../2026-05-circuit-simulator/
+    sys.path.insert(0, str(Path(__file__).parent.parent / "qcsim"))
     from qcsim.fingerprint import compute as _fp_compute
     def _compute_fingerprint(gates, num_qubits):
         return _fp_compute(gates, num_qubits)

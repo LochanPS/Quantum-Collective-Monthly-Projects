@@ -7,8 +7,32 @@ on:
     branches: [main]
 
 jobs:
-  lint:
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install qcsim
+        run: pip install -e "2026-05-circuit-simulator/qcsim[dev]"
+
+      - name: Run tests
+        run: |
+          cd 2026-05-circuit-simulator/qcsim
+          pytest tests/ -v --tb=short
+
+  lint:
+    name: Lint & Format
+    runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -17,10 +41,47 @@ jobs:
           python-version: "3.11"
 
       - name: Install tools
-        run: pip install black pylint
+        run: pip install black
 
-      - name: Check formatting (black)
-        run: black --check .
+      - name: Check formatting
+        run: |
+          black --check 2026-05-circuit-simulator/qcsim/qcsim/ \
+                        2026-05-circuit-simulator/qcsim/examples/ \
+                        2026-05-circuit-simulator/qcsim/tests/ \
+                        2026-05-circuit-simulator/circuit-library/ \
+                        --line-length 100
 
-      - name: Lint (pylint)
-        run: pylint **/*.py --disable=C0114,C0115,C0116 --fail-under=7.0 || true
+  library:
+    name: Circuit Library Integrity
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check for duplicate circuits
+        run: python 2026-05-circuit-simulator/circuit-library/check_duplicates.py
+
+      - name: Validate all circuit JSON files
+        run: |
+          python -c "
+          import json, sys
+          from pathlib import Path
+          lib = Path('2026-05-circuit-simulator/circuit-library')
+          errors = []
+          for f in lib.rglob('*.json'):
+              if f.name in ('index.json', 'tags.json', 'known_patterns.json'):
+                  continue
+              try:
+                  with open(f) as fh:
+                      json.load(fh)
+              except Exception as e:
+                  errors.append(f'{f}: {e}')
+          if errors:
+              for e in errors: print(e)
+              sys.exit(1)
+          print('All JSON files valid.')
+          "

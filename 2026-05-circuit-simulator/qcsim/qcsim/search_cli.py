@@ -12,9 +12,12 @@ def main():
     """Entry point for qcsim-search command."""
     # Find circuit-library/search.py relative to this installed package
     here = Path(__file__).resolve().parent
+    # here = .../2026-05-circuit-simulator/qcsim/qcsim/
+    # here.parent = .../2026-05-circuit-simulator/qcsim/
+    # here.parent.parent = .../2026-05-circuit-simulator/
     candidates = [
-        here.parent.parent.parent / "circuit-library" / "search.py",  # repo source
-        here.parent.parent / "circuit-library" / "search.py",
+        here.parent.parent / "circuit-library" / "search.py",   # installed from repo
+        here.parent.parent.parent / "circuit-library" / "search.py",  # fallback
         Path.cwd() / "circuit-library" / "search.py",
     ]
 

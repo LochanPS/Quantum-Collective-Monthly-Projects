@@ -1,0 +1,13 @@
+# CODEOWNERS — auto-request review from these people on PRs
+
+# Default: maintainer reviews everything
+*                                               @LochanPS
+
+# Circuit library — maintainer must approve all submissions
+2026-05-circuit-simulator/circuit-library/      @LochanPS
+
+# Core simulator — maintainer must approve changes
+2026-05-circuit-simulator/qcsim/qcsim/          @LochanPS
+
+# CI / workflows — maintainer must approve
+.github/                                        @LochanPS

@@ -3,7 +3,7 @@ name: Circuit Library Check
 on:
   pull_request:
     paths:
-      - "circuit-library/**"
+      - "2026-05-circuit-simulator/circuit-library/**"
 
 jobs:
   check:
@@ -12,17 +12,17 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check for duplicate circuits
-        run: python circuit-library/check_duplicates.py
+        run: python 2026-05-circuit-simulator/circuit-library/check_duplicates.py
 
       - name: Validate all circuit JSON files
         run: |
           python -c "
           import json, sys
           from pathlib import Path
-          lib = Path('circuit-library')
+          lib = Path('2026-05-circuit-simulator/circuit-library')
           errors = []
           for f in lib.rglob('*.json'):
-              if f.name in ('index.json',):
+              if f.name in ('index.json', 'tags.json', 'known_patterns.json'):
                   continue
               try:
                   with open(f) as fh:
@@ -32,5 +32,5 @@ jobs:
           if errors:
               for e in errors: print(e)
               sys.exit(1)
-          print(f'All JSON files valid.')
+          print('All JSON files valid.')
           "

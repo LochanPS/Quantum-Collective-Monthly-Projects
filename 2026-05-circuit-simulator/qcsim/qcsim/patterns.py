@@ -22,9 +22,11 @@ from .fingerprint import compute as compute_fingerprint, jaccard_similarity
 def _find_patterns_file() -> Optional[Path]:
     """Find known_patterns.json in the circuit-library directory."""
     here = Path(__file__).resolve().parent
+    # here = .../2026-05-circuit-simulator/qcsim/qcsim/
+    # here.parent.parent = .../2026-05-circuit-simulator/
     candidates = [
-        here.parent.parent.parent / "circuit-library" / "known_patterns.json",
         here.parent.parent / "circuit-library" / "known_patterns.json",
+        here.parent.parent.parent / "circuit-library" / "known_patterns.json",
         Path.cwd() / "circuit-library" / "known_patterns.json",
         Path(os.environ.get("QCSIM_LIBRARY_PATH", "")) / "known_patterns.json",
     ]
