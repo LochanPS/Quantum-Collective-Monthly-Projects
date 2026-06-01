@@ -146,7 +146,7 @@ qcsim-interactive --load ../circuit-library/examples/bell-state.json
 When you launch, you answer three questions:
 
 ```
-  Number of qubits (1-10): [2]:    ← press Enter to use default [2], or type a number
+  Number of qubits (1-15): [2]:    ← press Enter to use default [2], or type a number
   Number of columns  (1-20): [6]:  ← how many gate slots wide the circuit should be
   Backend — [K]ronecker or [T]ensor: ← K = default readable mode, T = faster for large circuits
 ```
@@ -533,34 +533,141 @@ Qubit 0 = **least significant bit** (rightmost in bitstrings). This matches Qisk
 
 ## Contributing
 
-### Add a New Gate
+Every contribution type below is welcome. Pick what matches your skill level.
 
-Read the full guide: **[docs/adding-gates.md](docs/adding-gates.md)**
+---
 
-Short version:
-1. Add gate matrix to `qcsim/gates.py`
-2. Add circuit method to `qcsim/circuit.py`
-3. Add TUI key binding to `qcsim/tui.py`
-4. Add gate help text to the `?` overlay in `qcsim/tui.py`
-5. Write 3+ tests in `tests/test_circuit.py`
-6. Open a PR: `feat(gates): add GATE_NAME`
+### 🟢 No quantum knowledge needed
 
-### Submit a Circuit to the Library
+**Submit a circuit to the library**
+Build anything in the TUI, press `E` to export, run `add_circuit.py`.
+→ Full guide: **[../circuit-library/CONTRIBUTING-CIRCUITS.md](../circuit-library/CONTRIBUTING-CIRCUITS.md)**
 
-Read the full guide: **[../circuit-library/CONTRIBUTING-CIRCUITS.md](../circuit-library/CONTRIBUTING-CIRCUITS.md)**
-
-Short version:
 ```bash
-# 1. Build circuit in TUI, press E to export
 qcsim-interactive
+# build circuit → press E to export → enter name and path
 
-# 2. Submit (validates, checks for duplicates, adds to library)
 python ../circuit-library/add_circuit.py my-circuit.json
+git add ../circuit-library/ && git commit -m "feat(library): add My Circuit" && git push
+```
 
-# 3. Commit and open PR
-git add ../circuit-library/
-git commit -m "feat(library): add My Circuit Name"
-git push
+**File a bug report**
+Try to break it — wrong qubit index, negative shots, edge cases. Open a [GitHub Issue](https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/issues).
+
+**Improve error messages**
+Find a Python traceback that could be a clean human-readable message. Fix in `qcsim/exceptions.py` + the relevant method.
+
+**Fix or improve docs**
+Anything confusing, wrong, or missing. Edit any `.md` file and open a PR.
+
+---
+
+### 🟡 Python, no quantum needed
+
+**Wire existing gates to TUI keys**
+Y, Z, S, T, CZ already exist in the Python API but have no keyboard shortcut in the TUI.
+Add them in `qcsim/tui.py` — `_GATE_DISPLAY`, `_handle()`, `_gate_help()`, and `_to_qcsim()`.
+
+**Add a new gate**
+The 10-step guide handles everything. You just need the 2×2 matrix (look it up).
+→ **[docs/adding-gates.md](docs/adding-gates.md)**
+
+**Write more tests**
+Edge cases, larger circuits, measurement statistics. Add to `tests/test_circuit.py`.
+
+**Circuit library search improvements**
+Add sort-by-gates, sort-by-newest, or full-text description search to `circuit-library/search.py`.
+
+**CLI improvements**
+Colorized output (`colorama`), progress bars on large circuits, better `--help` text.
+
+---
+
+### 🟡🟠 Python + some quantum intuition
+
+**Add gates to TUI from Python API**
+Gates that exist in `gates.py` but aren't in the TUI at all: `Y`, `Z`, `S`, `Sdg`, `T`, `Tdg`, `CZ`.
+
+**Partial measurement**
+`qc.measure(qubit)` — measure one qubit, collapse state, leave others in superposition.
+Needs: project state onto `|0⟩` or `|1⟩` subspace for that qubit, renormalize.
+
+**Gate inverse**
+`qc.inverse()` — reverse all gates in the log and apply conjugate transpose of each matrix.
+
+**Circuit equality checker**
+`qc1 == qc2` — compare two circuits produce the same unitary (multiply all gate matrices, check equal up to global phase).
+
+**Export to OpenQASM**
+OpenQASM is the standard quantum assembly language. Export a qcsim circuit to `.qasm` format so it can run anywhere.
+
+**Export to Qiskit**
+Convert qcsim gate log → `qiskit.QuantumCircuit` so users can submit to real IBM hardware.
+
+**Quantum teleportation example**
+3-qubit worked example: prepare state, Bell measurement, classical correction.
+Add as `examples/teleportation.py`.
+
+**Quantum Fourier Transform**
+Implement QFT as a reusable function: `from qcsim.algorithms import qft`.
+
+**Grover's search (oracle-based)**
+`grover(oracle_fn, num_qubits, iterations)` — generic Grover with any oracle.
+
+---
+
+### 🔴 Advanced
+
+**Bloch sphere visualizer**
+Single-qubit state as a point on a 3D sphere. Matplotlib, `mpl_toolkits.mplot3d`.
+Extract `(θ, φ)` from qubit amplitudes: `α|0⟩ + β|1⟩ → θ = 2·arccos(|α|), φ = arg(β/α)`.
+
+**Noise models**
+`DepolarizingNoise`, `BitFlipNoise`, `T1T2Noise` — apply random errors after each gate.
+Requires density matrix backend (see below).
+
+**Density matrix backend**
+`DensityMatrixCircuit` — represents state as 2^N × 2^N matrix instead of 2^N vector.
+Required for: mixed states, noise simulation, partial traces.
+
+**Circuit depth optimizer**
+Reorder commuting gates to reduce circuit depth without changing the output unitary.
+Commuting rule: gates on disjoint qubits always commute.
+
+**GPU backend**
+Replace `numpy` with `cupy` — drop-in swap, unlocks 30+ qubit simulation on any NVIDIA GPU.
+`QuantumCircuit(n, backend="gpu")`.
+
+**Matrix Product State (MPS) backend**
+Represent state as a tensor network. Simulates hundreds of qubits for low-entanglement circuits.
+Key reference: Vidal 2003 — efficient classical simulation of slightly entangled quantum computations.
+
+**IBM Quantum integration**
+`qc.run_on_ibm(api_token)` — convert to Qiskit circuit, submit to IBM free QPU tier, return real counts.
+
+**Benchmarking suite**
+Systematic comparison: qcsim (both backends) vs Qiskit vs Cirq — random circuits, varying depth and qubit count, plot runtime vs N.
+
+**Quantum error correction**
+Implement 3-qubit bit-flip code or surface code as a simulation. Research-level but very educational.
+
+---
+
+### Add a New Gate — Quick Reference
+
+Full guide: **[docs/adding-gates.md](docs/adding-gates.md)**
+
+```
+1. Add matrix function to qcsim/gates.py
+2. Add circuit method to qcsim/circuit.py
+3. Update _replay_gate dispatch in circuit.py
+4. Add display symbol to _GATE_DISPLAY in tui.py
+5. Add key binding in _handle() in tui.py
+6. Add gate help text in _gate_help() in tui.py
+7. Add case in _to_qcsim() in tui.py
+8. Write 3+ tests in tests/test_circuit.py
+9. Update gate table in this README
+10. PR title: feat(gates): add GATE_NAME
 ```
 
 ---

@@ -1,0 +1,53 @@
+{
+  "name": "Loch",
+  "num_qubits": 4,
+  "num_cols": 4,
+  "backend": "kronecker",
+  "gates": [
+    {
+      "gate": "H",
+      "row": 0,
+      "col": 0
+    },
+    {
+      "gate": "CNOT_T",
+      "row": 0,
+      "col": 1,
+      "linked_row": 1
+    },
+    {
+      "gate": "H",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "gate": "CNOT_C",
+      "row": 1,
+      "col": 1,
+      "linked_row": 0
+    },
+    {
+      "gate": "X",
+      "row": 2,
+      "col": 0
+    },
+    {
+      "gate": "CNOT_C",
+      "row": 2,
+      "col": 1,
+      "linked_row": 3
+    },
+    {
+      "gate": "X",
+      "row": 3,
+      "col": 0
+    },
+    {
+      "gate": "CNOT_T",
+      "row": 3,
+      "col": 1,
+      "linked_row": 2
+    }
+  ],
+  "fingerprint": "bafe3906061834c5"
+}

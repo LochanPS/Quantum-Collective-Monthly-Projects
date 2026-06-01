@@ -343,7 +343,7 @@ class CircuitBuilder:
         print("  +-----------------------------------------+")
         print()
 
-        n = self._ask_int("  Number of qubits (1-10): ", 1, 10, default=2)
+        n = self._ask_int("  Number of qubits (1-15): ", 1, 15, default=2)
         nc = self._ask_int("  Number of columns  (1-20): ", 1, 20, default=6)
 
         while True:
