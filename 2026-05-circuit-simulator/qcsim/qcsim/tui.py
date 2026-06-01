@@ -158,6 +158,24 @@ class CircuitGrid:
     def set(self, row: int, col: int, cell: Cell):
         self.cells[row][col] = cell
 
+    def expand_cols(self, by: int = 1, max_cols: int = 20) -> bool:
+        """Add `by` empty columns to the right. Returns False if already at max."""
+        if self.num_cols + by > max_cols:
+            return False
+        for row in self.cells:
+            row.extend(Cell() for _ in range(by))
+        self.num_cols += by
+        return True
+
+    def expand_qubits(self, by: int = 1, max_qubits: int = 15) -> bool:
+        """Add `by` empty qubit rows at the bottom. Returns False if already at max."""
+        if self.num_qubits + by > max_qubits:
+            return False
+        for _ in range(by):
+            self.cells.append([Cell() for _ in range(self.num_cols)])
+        self.num_qubits += by
+        return True
+
     def clear_cell(self, row: int, col: int):
         """Clear a cell and its linked partner."""
         cell = self.cells[row][col]
@@ -277,6 +295,7 @@ def _render_grid(
 
     # Help
     lines.append("  Gates : [H] [X] [C]NOT [W]AP  |  [Backspace] delete  |  [?] gate help")
+    lines.append("  Expand: [+] add column  [*] add qubit row")
     lines.append("  Action: [R]un  [E]xport  [I]mport  [Esc] reset  [Q]uit")
     lines.append("  Move  : Arrow keys")
 
@@ -437,6 +456,12 @@ class CircuitBuilder:
         elif key == "?":
             self._gate_help()
 
+        # Grid expansion
+        elif key == "+":
+            self._expand_cols()
+        elif key == "*":
+            self._expand_qubits()
+
         # Actions
         elif key == "r":
             self._run()
@@ -448,6 +473,24 @@ class CircuitBuilder:
             self._reset()
         elif key == "q":
             self._quit()
+
+    # ------------------------------------------------------------------ #
+    #  Grid expansion
+    # ------------------------------------------------------------------ #
+
+    def _expand_cols(self):
+        """Add one column to the right of the grid."""
+        if self.grid.expand_cols(by=1, max_cols=20):
+            self.status = f"Added column. Grid now {self.grid.num_cols} cols."
+        else:
+            self.status = "Already at max columns (20)."
+
+    def _expand_qubits(self):
+        """Add one qubit row at the bottom of the grid."""
+        if self.grid.expand_qubits(by=1, max_qubits=15):
+            self.status = f"Added qubit. Grid now {self.grid.num_qubits} qubits."
+        else:
+            self.status = "Already at max qubits (15)."
 
     # ------------------------------------------------------------------ #
     #  Gate placement
