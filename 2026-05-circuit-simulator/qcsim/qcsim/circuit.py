@@ -539,6 +539,22 @@ class QuantumCircuit:
         self._log.append(("SX", [qubit], None))
         return self
 
+    def sxdg(self, qubit: int) -> "QuantumCircuit":
+        """Apply the SX-dagger gate (inverse of SX).
+        Args:
+            qubit: Target qubit index.
+
+        Returns:
+            Self, for method chaining.
+
+        Raises:
+            QubitIndexError: If the qubit index is out of range.
+        """
+        self._check(qubit)
+        self._gate_single(G.SXdg(), qubit)
+        self._log.append(("SXdg", [qubit], None))
+        return self
+
     # ------------------------------------------------------------------ #
     #  Parametric single-qubit gates
     # ------------------------------------------------------------------ #
@@ -952,6 +968,7 @@ class QuantumCircuit:
             "T": lambda: self.t(qubits[0]),
             "Tdg": lambda: self.tdg(qubits[0]),
             "SX": lambda: self.sx(qubits[0]),
+            "SXdg": lambda: self.sxdg(qubits[0]),
             "Rx": lambda: self.rx(qubits[0], p["theta"]),
             "Ry": lambda: self.ry(qubits[0], p["theta"]),
             "Rz": lambda: self.rz(qubits[0], p["theta"]),

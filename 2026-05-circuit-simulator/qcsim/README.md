@@ -381,8 +381,10 @@ qc = QuantumCircuit(2, backend="tensor")      # Use tensor backend (faster for 1
 | `qc.y(q)` | Pauli-Y | `i|1⟩` |
 | `qc.z(q)` | Pauli-Z | `|0⟩` (Z only affects `|1⟩`) |
 | `qc.s(q)` | S gate | `|0⟩` (S adds phase to `|1⟩`) |
+| `qc.sdg(q)` | Sdg gate |
 | `qc.t(q)` | T gate | `|0⟩` (T adds π/4 phase to `|1⟩`) |
-| `qc.sx(q)` | √X | Square root of X |
+| `qc.sx(q)` | √X gate | Square root of X |
+| `qc.sxdg(q)` | √X† gate | inverse of SX |
 | `qc.rx(q, θ)` | Rx(θ) | Rotation around X-axis by θ radians |
 | `qc.ry(q, θ)` | Ry(θ) | Rotation around Y-axis by θ radians |
 | `qc.rz(q, θ)` | Rz(θ) | Rotation around Z-axis by θ radians |

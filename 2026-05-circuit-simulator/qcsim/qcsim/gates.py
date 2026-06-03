@@ -125,6 +125,14 @@ def SX() -> np.ndarray:
     return np.array([[1 + 1j, 1 - 1j], [1 - 1j, 1 + 1j]], dtype=complex) * 0.5
 
 
+def SXdg() -> np.ndarray:
+    """SX-dagger gate (inverse of SX). SXdg = SX†.
+    Returns:
+        2x2 complex array [[1-1j, 1+1j], [1+1j, 1-1j]] * 0.5.
+    """
+    return np.array([[1 - 1j, 1 + 1j], [1 + 1j, 1 - 1j]], dtype=complex) * 0.5
+
+
 def Rx(theta: float) -> np.ndarray:
     """Rotation around the X-axis by angle theta (radians).
 
@@ -262,5 +270,5 @@ def SWAP_mat() -> np.ndarray:
 #: Maps gate name → factory function (for gates with no parameters).
 SINGLE_QUBIT_GATES: dict[str, object] = {
     "I": I, "H": H, "X": X, "Y": Y, "Z": Z,
-    "S": S, "Sdg": Sdg, "T": T, "Tdg": Tdg, "SX": SX,
+    "S": S, "Sdg": Sdg, "T": T, "Tdg": Tdg, "SX": SX, "SXdg": SXdg,
 }

@@ -169,6 +169,12 @@ class TestRotationGates:
         assert abs(probs.get("0", 0) - 0.5) < 1e-5
         assert abs(probs.get("1", 0) - 0.5) < 1e-5
 
+    def test_sxdg_inverts_sx(self):
+        qc = QuantumCircuit(1)
+        qc.sx(0).sxdg(0)
+        probs = qc.probabilities()
+        assert abs(probs.get("0", 0) - 1.0) < 1e-10
+
     def test_probabilities_sum_one_after_rotation(self):
         qc = QuantumCircuit(3)
         qc.rx(0, 0.3).ry(1, 1.2).rz(2, 2.5)

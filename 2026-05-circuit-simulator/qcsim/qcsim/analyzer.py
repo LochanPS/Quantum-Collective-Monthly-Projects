@@ -17,8 +17,8 @@ if TYPE_CHECKING:
 # Gate categories for classification
 _TWO_QUBIT_GATES = {"CNOT_C", "CNOT", "CX", "CY", "CZ", "SWAP_A", "SWAP", "CP", "CCX"}
 _T_GATES = {"T", "Tdg"}
-_SINGLE_QUBIT_GATES = {"H", "X", "Y", "Z", "S", "Sdg", "SX", "Rx", "Ry", "Rz", "P", "U", "I"}
-_CLIFFORD_GATES = {"H", "X", "Y", "Z", "S", "Sdg", "CNOT", "CNOT_C", "CX", "CZ", "SWAP_A", "SWAP"}
+_SINGLE_QUBIT_GATES = {"H", "X", "Y", "Z", "S", "Sdg", "SX", "SXdg", "Rx", "Ry", "Rz", "P", "U", "I"}
+_CLIFFORD_GATES = {"H", "X", "Y", "Z", "S", "Sdg", "SX", "SXdg", "CNOT", "CNOT_C", "CX", "CZ", "SWAP_A", "SWAP"}
 
 
 @dataclass
