@@ -106,6 +106,7 @@ def _input(prompt: str) -> str:
 _GATE_DISPLAY: Dict[str, str] = {
     "H":        "H",
     "X":        "X",
+    "SXdg":     "D",   # SX-dagger gate
     "CNOT_C":   "@",   # CNOT control  (@  looks like a control dot)
     "CNOT_T":   "+",   # CNOT target   (+ looks like XOR/circle-plus)
     "SWAP_A":   "~",   # SWAP endpoint A
@@ -294,7 +295,7 @@ def _render_grid(
     lines.append("")
 
     # Help
-    lines.append("  Gates : [H] [X] [C]NOT [W]AP  |  [Backspace] delete  |  [?] gate help")
+    lines.append("  Gates : [H] [X] [D] [C]NOT [W]AP  |  [Backspace] delete  |  [?] gate help")
     lines.append("  Expand: [+] add column  [*] add qubit row")
     lines.append("  Action: [R]un  [E]xport  [I]mport  [Esc] reset  [Q]uit")
     lines.append("  Move  : Arrow keys")
@@ -441,6 +442,8 @@ class CircuitBuilder:
             self._place_single("H")
         elif key == "x":
             self._place_single("X")
+        elif key == "d":
+            self._place_single("SXdg")
 
         # Two-qubit gates
         elif key == "c":
@@ -591,6 +594,8 @@ class CircuitBuilder:
                     qc.h(row)
                 elif g == "X":
                     qc.x(row)
+                elif g == "SXdg":
+                    qc.sxdg(row)
                 elif g == "CNOT_C":
                     tgt = cell.linked_row
                     if tgt >= 0:
@@ -637,6 +642,15 @@ class CircuitBuilder:
                 "X*X = Identity",
                 "",
                 "Use: Initialise qubits to |1>, flip bits, build CNOT.",
+            ),
+            "SXdg": (
+                "SX-dagger Gate",
+                "Matrix: [[0.5-0.5j, 0.5+0.5j], [0.5+0.5j, 0.5-0.5j]]",
+                "SXdg|0> = (0.5-0.5i)|0> + (0.5+0.5i)|1>",
+                "SXdg|1> = (0.5+0.5i)|0> + (0.5-0.5i)|1>",
+                "SXdg*SXdg = X",
+                "",
+                "Use: Inverse of SX gate. Creates opposite phase superposition.",
             ),
             "CNOT_C": (
                 "CNOT Gate — Control qubit (@)",

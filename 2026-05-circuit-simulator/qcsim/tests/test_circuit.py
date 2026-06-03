@@ -292,6 +292,26 @@ class TestCZ:
         sv = qc.statevector()
         assert abs(sv[0] - 1.0) < 1e-10
 
+class TestSXdg:
+    def test_sxdg_exact_amplitudes_on_zero(self):
+        qc = QuantumCircuit(1)
+        qc.sxdg(0)
+        sv = qc.statevector()
+        assert abs(sv[0] - 0.5 * (1 - 1j)) < 1e-10
+        assert abs(sv[1] - 0.5 * (1 + 1j)) < 1e-10
+
+    def test_sxdg_twice_equals_x(self):
+        qc = QuantumCircuit(1)
+        qc.sxdg(0).sxdg(0)
+        probs = qc.probabilities()
+        assert abs(probs.get("1", 0) - 1.0) < 1e-10
+
+    def test_sxdg_inverts_sx(self):
+        qc = QuantumCircuit(1)
+        qc.sx(0).sxdg(0)
+        probs = qc.probabilities()
+        assert abs(probs.get("0", 0) - 1.0) < 1e-10
+
 
 # ================================================================== #
 #  Toffoli gate
