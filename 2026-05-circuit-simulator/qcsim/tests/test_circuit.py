@@ -169,12 +169,6 @@ class TestRotationGates:
         assert abs(probs.get("0", 0) - 0.5) < 1e-5
         assert abs(probs.get("1", 0) - 0.5) < 1e-5
 
-    def test_sxdg_inverts_sx(self):
-        qc = QuantumCircuit(1)
-        qc.sx(0).sxdg(0)
-        probs = qc.probabilities()
-        assert abs(probs.get("0", 0) - 1.0) < 1e-10
-
     def test_probabilities_sum_one_after_rotation(self):
         qc = QuantumCircuit(3)
         qc.rx(0, 0.3).ry(1, 1.2).rz(2, 2.5)
@@ -297,6 +291,26 @@ class TestCZ:
         qc.cz(0, 1)
         sv = qc.statevector()
         assert abs(sv[0] - 1.0) < 1e-10
+
+class TestSXdg:
+    def test_sxdg_exact_amplitudes_on_zero(self):
+        qc = QuantumCircuit(1)
+        qc.sxdg(0)
+        sv = qc.statevector()
+        assert abs(sv[0] - 0.5 * (1 - 1j)) < 1e-10
+        assert abs(sv[1] - 0.5 * (1 + 1j)) < 1e-10
+
+    def test_sxdg_twice_equals_x(self):
+        qc = QuantumCircuit(1)
+        qc.sxdg(0).sxdg(0)
+        probs = qc.probabilities()
+        assert abs(probs.get("1", 0) - 1.0) < 1e-10
+
+    def test_sxdg_inverts_sx(self):
+        qc = QuantumCircuit(1)
+        qc.sx(0).sxdg(0)
+        probs = qc.probabilities()
+        assert abs(probs.get("0", 0) - 1.0) < 1e-10
 
 
 # ================================================================== #

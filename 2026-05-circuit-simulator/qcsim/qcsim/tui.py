@@ -106,7 +106,7 @@ def _input(prompt: str) -> str:
 _GATE_DISPLAY: Dict[str, str] = {
     "H":        "H",
     "X":        "X",
-    "SXdg":     "SXdg",   # SX-dagger gate
+    "SXdg":     "D",   # SX-dagger gate
     "CNOT_C":   "@",   # CNOT control  (@  looks like a control dot)
     "CNOT_T":   "+",   # CNOT target   (+ looks like XOR/circle-plus)
     "SWAP_A":   "~",   # SWAP endpoint A
@@ -295,7 +295,7 @@ def _render_grid(
     lines.append("")
 
     # Help
-    lines.append("  Gates : [H] [X] [SXdg] [C]NOT [W]AP  |  [Backspace] delete  |  [?] gate help")
+    lines.append("  Gates : [H] [X] [D] [C]NOT [W]AP  |  [Backspace] delete  |  [?] gate help")
     lines.append("  Expand: [+] add column  [*] add qubit row")
     lines.append("  Action: [R]un  [E]xport  [I]mport  [Esc] reset  [Q]uit")
     lines.append("  Move  : Arrow keys")
@@ -442,7 +442,7 @@ class CircuitBuilder:
             self._place_single("H")
         elif key == "x":
             self._place_single("X")
-        elif key == "sxdg":
+        elif key == "d":
             self._place_single("SXdg")
 
         # Two-qubit gates
@@ -645,9 +645,9 @@ class CircuitBuilder:
             ),
             "SXdg": (
                 "SX-dagger Gate",
-                "Matrix: [[0.5, -0.5j], [-0.5j, 0.5]]",
-                "SXdg|0> = (|0> - i|1>) / 2",
-                "SXdg|1> = (-i|0> + |1>) / 2",
+                "Matrix: [[0.5-0.5j, 0.5+0.5j], [0.5+0.5j, 0.5-0.5j]]",
+                "SXdg|0> = (0.5-0.5i)|0> + (0.5+0.5i)|1>",
+                "SXdg|1> = (0.5+0.5i)|0> + (0.5-0.5i)|1>",
                 "SXdg*SXdg = X",
                 "",
                 "Use: Inverse of SX gate. Creates opposite phase superposition.",
