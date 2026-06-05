@@ -94,6 +94,25 @@ def _clear() -> None:
     os.system("cls" if os.name == "nt" else "clear")
 
 
+def _file_link(abs_path: str) -> str:
+    """Return a clickable OSC 8 hyperlink if the terminal supports it.
+
+    Windows Terminal sets WT_SESSION. VS Code sets TERM_PROGRAM=vscode.
+    iTerm2 sets TERM_PROGRAM=iTerm.app. Falls back to plain path otherwise.
+    Ctrl+click (Windows Terminal / VS Code) opens the file directly.
+    """
+    supports = (
+        os.environ.get("WT_SESSION")
+        or os.environ.get("TERM_PROGRAM") in ("vscode", "iTerm.app", "Hyper")
+    )
+    uri = "file:///" + abs_path.replace("\\", "/")
+    if supports:
+        # OSC 8 hyperlink: ESC ] 8 ; ; URI ST text ST
+        return f"\033]8;;{uri}\033\\{abs_path}\033]8;;\033\\"
+    # Fallback: print URI — most terminals detect file:// and underline it
+    return f"{abs_path}\n  Open : {uri}"
+
+
 def _input(prompt: str) -> str:
     """Input that works after tty.setraw is restored."""
     try:
@@ -842,7 +861,7 @@ class CircuitBuilder:
             abs_path = os.path.abspath(path)
             with open(path, "w") as f:
                 f.write(code)
-            print(f"\n  Saved: {abs_path}")
+            print(f"\n  Saved: {_file_link(abs_path)}")
             print()
             print(hint1)
             print(hint2)

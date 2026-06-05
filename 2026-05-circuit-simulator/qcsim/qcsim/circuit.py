@@ -1229,6 +1229,20 @@ class QuantumCircuit:
             "# # Check a previously submitted job:",
             "# # job = service.job('YOUR_JOB_ID')",
             "# # print(job.status())",
+            "",
+            "",
+            "# ================================================================",
+            "# OPTION 3 — Run on Bluequbit (easiest alternative hardware)",
+            "# ================================================================",
+            "# pip install bluequbit",
+            "# Sign up free: https://bluequbit.ai",
+            "#",
+            "# import bluequbit",
+            "# bq = bluequbit.init('YOUR_BLUEQUBIT_TOKEN')",
+            f"# result = bq.run({var}, device='cpu')   # or 'gpu' or 'quantum'",
+            "# print(result.get_counts())",
+            "#",
+            "# Bluequbit accepts Qiskit QuantumCircuit directly — no extra conversion.",
         ]
 
         return "\n".join(lines)
