@@ -800,9 +800,10 @@ class CircuitBuilder:
 
         data = self.grid.to_json(name=name, backend=self.backend)
         try:
+            abs_path = os.path.abspath(path)
             with open(path, "w") as f:
                 json.dump(data, f, indent=2)
-            print(f"\n  Saved: {path}")
+            print(f"\n  Saved: {_file_link(abs_path)}")
             print(f"  Fingerprint: {data['fingerprint']}")
             print()
             print("  To share in the circuit library:")
