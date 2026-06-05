@@ -584,3 +584,76 @@ class TestQiskitExport:
         code = qc.to_qiskit_code()
         # Will raise SyntaxError if invalid
         ast.parse(code)
+
+
+# ================================================================== #
+#  OpenQASM 2.0 export
+# ================================================================== #
+
+class TestQASM2Export:
+    def test_qasm_header(self):
+        qc = QuantumCircuit(2)
+        qasm = qc.to_qasm2()
+        assert "OPENQASM 2.0;" in qasm
+        assert 'include "qelib1.inc";' in qasm
+
+    def test_qasm_registers(self):
+        qc = QuantumCircuit(3)
+        qasm = qc.to_qasm2()
+        assert "qreg q[3];" in qasm
+        assert "creg c[3];" in qasm
+
+    def test_qasm_measure(self):
+        qc = QuantumCircuit(2)
+        qasm = qc.to_qasm2()
+        assert "measure q -> c;" in qasm
+
+    def test_qasm_single_qubit_gates(self):
+        qc = QuantumCircuit(1)
+        qc.h(0).x(0).y(0).z(0).s(0).t(0)
+        qasm = qc.to_qasm2()
+        assert "h q[0];" in qasm
+        assert "x q[0];" in qasm
+        assert "y q[0];" in qasm
+        assert "z q[0];" in qasm
+        assert "s q[0];" in qasm
+        assert "t q[0];" in qasm
+
+    def test_qasm_cnot(self):
+        qc = QuantumCircuit(2)
+        qc.cnot(0, 1)
+        qasm = qc.to_qasm2()
+        assert "cx q[0],q[1];" in qasm
+
+    def test_qasm_swap(self):
+        qc = QuantumCircuit(2)
+        qc.swap(0, 1)
+        qasm = qc.to_qasm2()
+        assert "swap q[0],q[1];" in qasm
+
+    def test_qasm_rotation_gates(self):
+        import math
+        qc = QuantumCircuit(1)
+        qc.rx(0, math.pi)
+        qasm = qc.to_qasm2()
+        assert "rx(" in qasm
+        assert ") q[0];" in qasm
+
+    def test_qasm_toffoli(self):
+        qc = QuantumCircuit(3)
+        qc.toffoli(0, 1, 2)
+        qasm = qc.to_qasm2()
+        assert "ccx q[0],q[1],q[2];" in qasm
+
+    def test_qasm_sxdg(self):
+        qc = QuantumCircuit(1)
+        qc.sxdg(0)
+        qasm = qc.to_qasm2()
+        assert "sxdg q[0];" in qasm
+
+    def test_qasm_ghz_returns_string(self):
+        qc = QuantumCircuit(3)
+        qc.h(0).cnot(0, 1).cnot(0, 2)
+        qasm = qc.to_qasm2()
+        assert isinstance(qasm, str)
+        assert len(qasm) > 0

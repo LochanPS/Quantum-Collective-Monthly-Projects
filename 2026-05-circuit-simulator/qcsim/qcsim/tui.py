@@ -302,7 +302,7 @@ def _render_grid(
     lines.append("  Gates : [H] [X] [D] [C]NOT S[W]AP  |  [Backspace] delete")
     lines.append("  Help  : [?] gate info")
     lines.append("  Expand: [+] add column  [*] add qubit row")
-    lines.append("  Action: [R]un  [E]xport JSON  [Ctrl+K] Qiskit  [I]mport  [Q]uit")
+    lines.append("  Action: [R]un  [E]xport JSON  [Ctrl+K] py/qasm  [I]mport  [Q]uit")
     lines.append("  Reset : [Esc] reset grid")
     lines.append("  Move  : Arrow keys")
 
@@ -800,24 +800,53 @@ class CircuitBuilder:
 
     def _export_qiskit(self):
         _clear()
-        print("  Export as Qiskit Python code\n")
+        print("  Export circuit code\n")
+        print("  Format:")
+        print("    [1] Qiskit Python (.py)  — run on IBM Quantum or Aer simulator")
+        print("    [2] OpenQASM 2.0  (.qasm) — universal, works with Qiskit/Cirq/Braket")
+        print()
+        fmt = _input("  Choose [1/2, default 1]: ").strip() or "1"
+        if fmt not in ("1", "2"):
+            print("  Invalid choice.")
+            print()
+            _input("  Press Enter to continue...")
+            return
+
         name = _input("  Circuit name [untitled]: ") or "untitled"
         safe_name = name.lower().replace(" ", "_")
-        default_path = f"{safe_name}_qiskit.py"
-        path = _input(f"  Save path [{default_path}]: ") or default_path
-        if not path.endswith(".py"):
-            path += ".py"
+
+        if fmt == "1":
+            default_path = f"{safe_name}_qiskit.py"
+            path = _input(f"  Save path [{default_path}]: ") or default_path
+            if not path.endswith(".py"):
+                path += ".py"
+        else:
+            default_path = f"{safe_name}.qasm"
+            path = _input(f"  Save path [{default_path}]: ") or default_path
+            if not path.endswith(".qasm"):
+                path += ".qasm"
 
         try:
             qc = self._to_qcsim()
-            code = qc.to_qiskit_code(var="qc")
+            if fmt == "1":
+                code = qc.to_qiskit_code(var="qc")
+                hint1 = "  Run it:  python " + path
+                hint2 = "  Needs:   pip install qiskit qiskit-aer"
+                hint3 = "  IBM run: pip install qiskit-ibm-runtime"
+            else:
+                code = qc.to_qasm2()
+                hint1 = "  Load in Qiskit: QuantumCircuit.from_qasm_file('" + path + "')"
+                hint2 = "  Load in Cirq:   cirq.from_qasm(open('" + path + "').read())"
+                hint3 = "  Compatible with: IBM Quantum, Google Cirq, Amazon Braket"
+
+            abs_path = os.path.abspath(path)
             with open(path, "w") as f:
                 f.write(code)
-            print(f"\n  Saved: {path}")
+            print(f"\n  Saved: {abs_path}")
             print()
-            print("  Run it:  python " + path)
-            print("  Needs:   pip install qiskit")
-            print("  On IBM:  pip install qiskit-ibm-runtime")
+            print(hint1)
+            print(hint2)
+            print(hint3)
         except Exception as exc:
             print(f"  Error: {exc}")
 
