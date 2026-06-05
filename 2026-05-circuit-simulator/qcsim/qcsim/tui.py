@@ -101,15 +101,17 @@ def _file_link(abs_path: str) -> str:
     iTerm2 sets TERM_PROGRAM=iTerm.app. Falls back to plain path otherwise.
     Ctrl+click (Windows Terminal / VS Code) opens the file directly.
     """
+    from urllib.parse import quote
+    # URL-encode spaces and special chars so paths with spaces work fully
+    uri = "file:///" + quote(abs_path.replace("\\", "/"), safe="/:")
     supports = (
         os.environ.get("WT_SESSION")
         or os.environ.get("TERM_PROGRAM") in ("vscode", "iTerm.app", "Hyper")
     )
-    uri = "file:///" + abs_path.replace("\\", "/")
     if supports:
-        # OSC 8 hyperlink: ESC ] 8 ; ; URI ST text ST
+        # OSC 8 hyperlink: ESC ] 8 ; ; URI ST display-text ST
         return f"\033]8;;{uri}\033\\{abs_path}\033]8;;\033\\"
-    # Fallback: print URI — most terminals detect file:// and underline it
+    # Fallback: encoded URI — terminals auto-detect and make it clickable
     return f"{abs_path}\n  Open : {uri}"
 
 
