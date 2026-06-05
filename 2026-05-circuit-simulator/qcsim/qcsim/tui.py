@@ -58,6 +58,8 @@ def _read_key_windows() -> str:
         return "esc"
     if ch == b"\x08":
         return "backspace"
+    if ch == b"\x0b":   # Ctrl+K
+        return "ctrl+k"
     try:
         return ch.decode("utf-8").lower()
     except Exception:
@@ -81,6 +83,8 @@ def _read_key_unix() -> str:
             return "enter"
         if ch in ("\x08", "\x7f"):
             return "backspace"
+        if ch == "\x0b":   # Ctrl+K
+            return "ctrl+k"
         return ch.lower()
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old)
@@ -298,7 +302,8 @@ def _render_grid(
     lines.append("  Gates : [H] [X] [D] [C]NOT S[W]AP  |  [Backspace] delete")
     lines.append("  Help  : [?] gate info")
     lines.append("  Expand: [+] add column  [*] add qubit row")
-    lines.append("  Action: [R]un  [E]xport JSON  [K]iskit export  [I]mport  [Esc] reset  [Q]uit")
+    lines.append("  Action: [R]un  [E]xport JSON  [Ctrl+K] Qiskit  [I]mport  [Q]uit")
+    lines.append("  Reset : [Esc] reset grid")
     lines.append("  Move  : Arrow keys")
 
     return "\n".join(lines)
@@ -471,7 +476,7 @@ class CircuitBuilder:
             self._run()
         elif key == "e":
             self._export()
-        elif key == "k":
+        elif key == "ctrl+k":
             self._export_qiskit()
         elif key == "i":
             self._import()
