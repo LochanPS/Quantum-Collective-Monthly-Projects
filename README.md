@@ -57,14 +57,15 @@ pip install -e . && qcsim-interactive
 **What's inside:**
 | Feature | Description |
 |---------|-------------|
-| 🎮 Interactive TUI | Build circuits visually — no coding needed |
-| 🔗 25+ Gates | H, X, CNOT, SWAP, Rx, Ry, Rz, Toffoli and more |
+| 🎮 Interactive TUI | Build circuits visually — no coding needed, up to 15 qubits |
+| 🔗 25+ Gates | H, X, SXdg, CNOT, SWAP, Rx, Ry, Rz, Toffoli and more |
 | 📊 Live Metrics | Depth, gate count, T-gate cost, entanglement |
 | 🔍 Pattern Recognition | Recognizes Bell state, GHZ, and other known circuits |
 | 📚 Circuit Library | Searchable community circuits |
 | 🐍 Python API | Clean method chaining, Qiskit-compatible |
 | 💪 Dual Backends | Kronecker (readable) + Tensor (scales to 20+ qubits) |
-| ✅ Tested | 52 passing tests, Qiskit-compatible output |
+| 📤 Code Export | Export circuits as Qiskit `.py` or OpenQASM 2.0 `.qasm` — run on IBM Quantum, Cirq, Braket |
+| ✅ Tested | 77 passing tests, Qiskit-compatible output |
 
 **Jump straight to:**
 - **[→ Full documentation](2026-05-circuit-simulator/qcsim/README.md)** — API, TUI guide, architecture

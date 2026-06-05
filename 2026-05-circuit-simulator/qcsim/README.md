@@ -41,7 +41,7 @@ It simulates quantum circuits using the **state vector formalism**: the quantum 
 │   │   ├── ghz_state.py          GHZ state (multi-qubit entanglement)
 │   │   ├── deutsch_jozsa.py      Deutsch-Jozsa algorithm
 │   │   └── grover.py             Grover's search algorithm
-│   ├── tests/                    ← 52 passing tests
+│   ├── tests/                    ← 77 passing tests
 │   │   ├── test_circuit.py       Core correctness tests
 │   │   └── test_vs_qiskit.py     Optional: compare output against Qiskit
 │   ├── docs/
@@ -170,8 +170,11 @@ After setup, the main builder screen appears.
   Mode : NORMAL
   Pos  : q[0], col 0
 
-  Gates : [H] [X] [C]NOT [W]AP  |  [Backspace] delete  |  [?] gate help
-  Action: [R]un  [E]xport  [I]mport  [Esc] reset  [Q]uit
+  Gates : [H] [X] [D] [C]NOT S[W]AP  |  [Backspace] delete
+  Help  : [?] gate info
+  Expand: [+] add column  [*] add qubit row
+  Action: [R]un  [E]xport JSON  [Ctrl+K] py/qasm  [I]mport  [Q]uit
+  Reset : [Esc] reset grid
   Move  : Arrow keys
 ```
 
@@ -190,6 +193,7 @@ The cursor shows as `>[X]<` — double brackets with arrows. Empty cells show `[
 |-----|------|-------------|
 | `H` | Hadamard | Creates superposition. `H\|0⟩ = (\|0⟩+\|1⟩)/√2` |
 | `X` | Pauli-X | Flips the qubit. `X\|0⟩ = \|1⟩` |
+| `D` | SXdg (√X†) | Inverse of SX gate. `SXdg·SXdg = X` |
 | `C` | CNOT | Two-qubit gate — see below |
 | `W` | SWAP | Two-qubit gate — see below |
 | `Backspace` | Delete | Removes the gate at the cursor |
@@ -264,10 +268,53 @@ Press `E` to save your circuit as a JSON file:
 ```
   Circuit name [untitled]: Bell State
   Save path [bell-state.json]: my-circuits/bell-state.json
+
+  Saved: C:\Users\you\my-circuits\bell-state.json   ← Ctrl+click to open
 ```
 
 The JSON file stores every gate, its position, and a fingerprint (unique ID for dedup).
 You can share this file or submit it to the circuit library.
+
+### Exporting Code — `[Ctrl+K]`
+
+Press `Ctrl+K` to export your circuit as runnable code:
+
+```
+  Export circuit code
+
+  Format:
+    [1] Qiskit Python (.py)   — run on IBM Quantum or Aer simulator
+    [2] OpenQASM 2.0  (.qasm) — universal, works with Qiskit/Cirq/Braket
+
+  Choose [1/2, default 1]: 1
+  Circuit name [untitled]: bell
+  Save path [bell_qiskit.py]:
+
+  Saved: C:\Users\you\Desktop\bell_qiskit.py   ← Ctrl+click to open
+
+  Run it:  python bell_qiskit.py
+  Needs:   pip install qiskit qiskit-aer
+  IBM run: pip install qiskit-ibm-runtime
+```
+
+**Qiskit `.py`** — complete script with three run options:
+1. Local simulation with Qiskit Aer (instant, free)
+2. Real IBM Quantum hardware (free tier, needs API token)
+3. Bluequbit hardware (alternative cloud QPU)
+
+**OpenQASM 2.0 `.qasm`** — universal quantum assembly language:
+```qasm
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2];
+creg c[2];
+h q[0];
+cx q[0],q[1];
+measure q -> c;
+```
+Loadable in Qiskit (`QuantumCircuit.from_qasm_file()`), Google Cirq, Amazon Braket.
+
+The saved path is clickable (Ctrl+click) in Windows Terminal and VS Code.
 
 ### Importing a Circuit — `[I]`
 
@@ -313,12 +360,16 @@ Press any key to dismiss.
 | `↑` `↓` `←` `→` | Navigate the grid |
 | `H` | Place Hadamard gate |
 | `X` | Place Pauli-X gate |
+| `D` | Place SXdg gate (√X†, inverse of SX) |
 | `C` | Place CNOT (first press = target, second press = control) |
 | `W` | Place SWAP (first press = first qubit, second press = second qubit) |
 | `Backspace` | Delete gate at cursor |
-| `?` | Show gate help overlay |
+| `?` | Show gate help overlay for cell under cursor |
+| `+` | Add a column (expand circuit width, max 20) |
+| `*` | Add a qubit row (expand circuit height, max 15) |
 | `R` | Run simulation |
 | `E` | Export circuit to JSON |
+| `Ctrl+K` | Export circuit as Qiskit `.py` or OpenQASM 2.0 `.qasm` |
 | `I` | Import circuit from JSON |
 | `Esc` | Reset (clear all gates) |
 | `Q` | Quit |
@@ -469,7 +520,7 @@ Each example prints: circuit diagram → state vector → measurement histogram.
 ## Tests
 
 ```bash
-# Run all 52 tests
+# Run all 77 tests
 pytest tests/ -v
 
 # Run with coverage
@@ -480,7 +531,7 @@ pytest tests/ -v --cov=qcsim
 pytest tests/test_vs_qiskit.py -v
 ```
 
-Tests cover: initial state, all gates, Bell/GHZ entanglement, SWAP/CZ/Toffoli, measurement statistics, circuit operations, error handling, algorithm correctness.
+Tests cover: initial state, all gates, Bell/GHZ entanglement, SWAP/CZ/Toffoli, SXdg, measurement statistics, circuit operations, error handling, algorithm correctness, Qiskit code export, OpenQASM 2.0 export.
 
 ---
 
@@ -567,8 +618,9 @@ Anything confusing, wrong, or missing. Edit any `.md` file and open a PR.
 ### 🟡 Python, no quantum needed
 
 **Wire existing gates to TUI keys**
-Y, Z, S, T, CZ already exist in the Python API but have no keyboard shortcut in the TUI.
+Y, Z, S, T, CZ already exist in the Python API but have no keyboard shortcut in the TUI yet.
 Add them in `qcsim/tui.py` — `_GATE_DISPLAY`, `_handle()`, `_gate_help()`, and `_to_qcsim()`.
+Available single-char keys: `a b f g j k l m n o p s t u v y z`
 
 **Add a new gate**
 The 10-step guide handles everything. You just need the 2×2 matrix (look it up).
@@ -600,11 +652,8 @@ Needs: project state onto `|0⟩` or `|1⟩` subspace for that qubit, renormaliz
 **Circuit equality checker**
 `qc1 == qc2` — compare two circuits produce the same unitary (multiply all gate matrices, check equal up to global phase).
 
-**Export to OpenQASM**
-OpenQASM is the standard quantum assembly language. Export a qcsim circuit to `.qasm` format so it can run anywhere.
-
-**Export to Qiskit**
-Convert qcsim gate log → `qiskit.QuantumCircuit` so users can submit to real IBM hardware.
+**Add more export backends**
+Qiskit `.py` and OpenQASM 2.0 `.qasm` are done (press `Ctrl+K`). Next targets: Cirq Python, Quil (Rigetti), or OpenQASM 3.0.
 
 **Quantum teleportation example**
 3-qubit worked example: prepare state, Bell measurement, classical correction.
@@ -678,7 +727,7 @@ Full guide: **[docs/adding-gates.md](docs/adding-gates.md)**
 
 - Max ~20 qubits — state vector grows as 2^N
 - No noise — pure quantum states only (see Density Matrix extension idea)
-- Classical simulation — cannot run on real quantum hardware (yet)
+- Direct hardware execution not built-in — use `Ctrl+K` to export as Qiskit `.py` or OpenQASM `.qasm`, then run on IBM Quantum, Cirq, or Braket
 - Kronecker backend: builds full matrix per gate, slow above 15 qubits → switch to `backend="tensor"`
 
 ---

@@ -35,13 +35,14 @@ pytest tests/ -v         # Run 52 tests
 ```
 
 **Currently implemented:**
-- State vector simulation for up to 20 qubits
-- Gates: H, X, CNOT, SWAP (interactive TUI), plus Y, Z, S, T, Rx, Ry, Rz, Toffoli, and 15+ more via Python API
+- State vector simulation for up to 20 qubits (TUI: up to 15, expandable live with `+`/`*`)
+- Gates: H, X, SXdg in TUI (`D` key), plus CNOT, SWAP, Y, Z, S, T, Rx, Ry, Rz, CP, Toffoli and 15+ more via Python API
 - Two simulation backends: Kronecker expansion and tensor formalism
-- Interactive terminal circuit builder (arrow keys + letter keys)
+- Interactive terminal circuit builder (arrow keys + letter keys, dynamic grid expansion)
 - Circuit diagram printer, statevector display, measurement histogram
+- **Code export** (`Ctrl+K`): Qiskit Python (`.py`) or OpenQASM 2.0 (`.qasm`) — run on IBM Quantum, Google Cirq, Amazon Braket
 - Community circuit library with search and deduplication
-- 52 passing tests, Qiskit-compatible output
+- 77 passing tests, Qiskit-compatible output
 
 **[→ Full feature list and documentation](qcsim/README.md)**
 
@@ -55,7 +56,7 @@ The reference implementation is a foundation. Here's what's missing and what you
 
 Good first contributions if you're new to quantum computing:
 
-- **More gates in the TUI** — Currently H, X, CNOT, SWAP are interactive. Add Y, Z, S, T as TUI keys
+- **More gates in the TUI** — H, X, SXdg, CNOT, SWAP are interactive. Add Y, Z, S, T as TUI keys (available keys: `y z s t v` and more)
 - **New single-qubit gates** — ISWAP, ECR, DCX, or any unitary 2×2 matrix
 - **Partial measurement** — `qc.measure(qubit)` to measure a single qubit and collapse the state
 - **Gate inverse** — `qc.inverse()` to reverse a circuit with conjugate-transposed gates
@@ -84,7 +85,7 @@ Research-level extensions with real impact:
 - **GPU acceleration** — replace NumPy with CuPy for 30+ qubit simulation on a GPU
 - **Matrix Product State (MPS)** — tensor network representation for hundreds of qubits in low-entanglement circuits
 - **Quantum error correction** — surface codes, stabilizer formalism, logical qubit simulation
-- **IBM Quantum integration** — export qcsim circuits to Qiskit, run on real quantum hardware
+- **More export backends** — Qiskit `.py` and OpenQASM 2.0 `.qasm` are done. Add Cirq Python, Quil (Rigetti), or OpenQASM 3.0
 - **Benchmarking suite** — systematic comparison of qcsim vs Qiskit vs Cirq for random circuits
 
 ---
