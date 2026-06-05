@@ -496,3 +496,91 @@ class TestAlgorithms:
         probs = qc.probabilities()
         # After 1 Grover iteration on 2 qubits, |11⟩ should dominate
         assert probs.get("11", 0) > 0.95
+
+
+# ================================================================== #
+#  Qiskit export
+# ================================================================== #
+
+class TestQiskitExport:
+    def test_export_returns_string(self):
+        qc = QuantumCircuit(2)
+        qc.h(0).cnot(0, 1)
+        code = qc.to_qiskit_code()
+        assert isinstance(code, str)
+
+    def test_export_contains_qiskit_import(self):
+        qc = QuantumCircuit(1)
+        qc.h(0)
+        code = qc.to_qiskit_code()
+        assert "from qiskit import QuantumCircuit" in code
+
+    def test_export_circuit_size(self):
+        qc = QuantumCircuit(3)
+        code = qc.to_qiskit_code()
+        assert "QuantumCircuit(3, 3)" in code
+
+    def test_export_single_qubit_gates(self):
+        qc = QuantumCircuit(1)
+        qc.h(0).x(0).y(0).z(0).s(0).t(0)
+        code = qc.to_qiskit_code()
+        assert "qc.h(0)" in code
+        assert "qc.x(0)" in code
+        assert "qc.y(0)" in code
+        assert "qc.z(0)" in code
+        assert "qc.s(0)" in code
+        assert "qc.t(0)" in code
+
+    def test_export_cnot(self):
+        qc = QuantumCircuit(2)
+        qc.cnot(0, 1)
+        code = qc.to_qiskit_code()
+        assert "qc.cx(0, 1)" in code
+
+    def test_export_swap(self):
+        qc = QuantumCircuit(2)
+        qc.swap(0, 1)
+        code = qc.to_qiskit_code()
+        assert "qc.swap(0, 1)" in code
+
+    def test_export_rotation_gates(self):
+        import math
+        qc = QuantumCircuit(1)
+        qc.rx(0, math.pi / 2)
+        code = qc.to_qiskit_code()
+        assert "qc.rx(" in code
+        assert ", 0)" in code
+
+    def test_export_sxdg(self):
+        qc = QuantumCircuit(1)
+        qc.sxdg(0)
+        code = qc.to_qiskit_code()
+        assert "qc.sxdg(0)" in code
+
+    def test_export_toffoli(self):
+        qc = QuantumCircuit(3)
+        qc.toffoli(0, 1, 2)
+        code = qc.to_qiskit_code()
+        assert "qc.ccx(0, 1, 2)" in code
+
+    def test_export_custom_var_name(self):
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        code = qc.to_qiskit_code(var="bell")
+        assert "bell = QuantumCircuit(2, 2)" in code
+        assert "bell.h(0)" in code
+
+    def test_export_includes_measure(self):
+        qc = QuantumCircuit(2)
+        qc.h(0).cnot(0, 1)
+        code = qc.to_qiskit_code()
+        assert "measure" in code
+
+    def test_export_ghz_is_valid_python(self):
+        """The exported code must be syntactically valid Python."""
+        import ast
+        qc = QuantumCircuit(3)
+        qc.h(0).cnot(0, 1).cnot(0, 2)
+        code = qc.to_qiskit_code()
+        # Will raise SyntaxError if invalid
+        ast.parse(code)

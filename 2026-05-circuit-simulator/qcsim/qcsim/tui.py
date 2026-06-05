@@ -298,7 +298,7 @@ def _render_grid(
     lines.append("  Gates : [H] [X] [D] [C]NOT S[W]AP  |  [Backspace] delete")
     lines.append("  Help  : [?] gate info")
     lines.append("  Expand: [+] add column  [*] add qubit row")
-    lines.append("  Action: [R]un  [E]xport  [I]mport  [Esc] reset  [Q]uit")
+    lines.append("  Action: [R]un  [E]xport JSON  [K]iskit export  [I]mport  [Esc] reset  [Q]uit")
     lines.append("  Move  : Arrow keys")
 
     return "\n".join(lines)
@@ -471,6 +471,8 @@ class CircuitBuilder:
             self._run()
         elif key == "e":
             self._export()
+        elif key == "k":
+            self._export_qiskit()
         elif key == "i":
             self._import()
         elif key == "esc":
@@ -783,6 +785,36 @@ class CircuitBuilder:
             print(f"  Copy {path} to circuit-library/ in the repo and open a PR.")
         except Exception as exc:
             print(f"  Error saving: {exc}")
+
+        print()
+        _input("  Press Enter to continue...")
+
+    # ------------------------------------------------------------------ #
+    #  Qiskit export
+    # ------------------------------------------------------------------ #
+
+    def _export_qiskit(self):
+        _clear()
+        print("  Export as Qiskit Python code\n")
+        name = _input("  Circuit name [untitled]: ") or "untitled"
+        safe_name = name.lower().replace(" ", "_")
+        default_path = f"{safe_name}_qiskit.py"
+        path = _input(f"  Save path [{default_path}]: ") or default_path
+        if not path.endswith(".py"):
+            path += ".py"
+
+        try:
+            qc = self._to_qcsim()
+            code = qc.to_qiskit_code(var="qc")
+            with open(path, "w") as f:
+                f.write(code)
+            print(f"\n  Saved: {path}")
+            print()
+            print("  Run it:  python " + path)
+            print("  Needs:   pip install qiskit")
+            print("  On IBM:  pip install qiskit-ibm-runtime")
+        except Exception as exc:
+            print(f"  Error: {exc}")
 
         print()
         _input("  Press Enter to continue...")
