@@ -1,0 +1,63 @@
+{
+  "name": "ghz_4",
+  "num_qubits": 4,
+  "num_cols": 4,
+  "backend": "kronecker",
+  "gates": [
+    {
+      "gate": "H",
+      "row": 0,
+      "col": 0
+    },
+    {
+      "gate": "CNOT_C",
+      "row": 0,
+      "col": 1,
+      "linked_row": 1
+    },
+    {
+      "gate": "CNOT_T",
+      "row": 1,
+      "col": 1,
+      "linked_row": 0
+    },
+    {
+      "gate": "CNOT_C",
+      "row": 1,
+      "col": 2,
+      "linked_row": 2
+    },
+    {
+      "gate": "CNOT_T",
+      "row": 2,
+      "col": 2,
+      "linked_row": 1
+    },
+    {
+      "gate": "CNOT_C",
+      "row": 2,
+      "col": 3,
+      "linked_row": 3
+    },
+    {
+      "gate": "CNOT_T",
+      "row": 3,
+      "col": 3,
+      "linked_row": 2
+    }
+  ],
+  "fingerprint": "53ac5ae9913daae9",
+  "description": "It implements a 4 qubit GHZ (Greenberger-Horne-Zeilinger) state using hadamard and cnot gates.",
+  "category": "entanglement",
+  "difficulty": "beginner",
+  "tags": [
+    "beginner",
+    "entanglement",
+    "ghz"
+  ],
+  "source_url": "Nature, QuEra Computing",
+  "created_at": "2026-06-05",
+  "version": "1.0",
+  "num_gates": 4,
+  "verified": false
+}
