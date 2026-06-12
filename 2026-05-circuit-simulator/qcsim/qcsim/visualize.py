@@ -175,7 +175,7 @@ def _render_gate(rows, n: int, W: int, name: str, qubits: list, params: dict) ->
         a, b = qubits[0], qubits[1]
         lo, hi = min(a, b), max(a, b)
 
-        if name in ("CNOT", "CX"):
+        if name in ("CNOT", "CX", "CP"):
             ctrl, tgt = a, b
             _render_controlled(rows, n, ctrl, tgt, _CTRL, _TARG, lo, hi)
         elif name == "CY":
@@ -186,9 +186,6 @@ def _render_gate(rows, n: int, W: int, name: str, qubits: list, params: dict) ->
             _render_controlled(rows, n, ctrl, tgt, _CTRL, "Z", lo, hi)
         elif name in ("SWAP",):
             _render_swap(rows, n, a, b, lo, hi)
-        elif name == "CP":
-            ctrl, tgt = a, b
-            _render_controlled(rows, n, ctrl, tgt, _CTRL, "P", lo, hi)
         else:
             # Generic 2-qubit: show as box on both qubits
             _render_generic_multi(rows, n, name, qubits)

@@ -111,6 +111,8 @@ _GATE_DISPLAY: Dict[str, str] = {
     "CNOT_T":   "+",   # CNOT target   (+ looks like XOR/circle-plus)
     "SWAP_A":   "~",   # SWAP endpoint A
     "SWAP_B":   "~",   # SWAP endpoint B
+    "CP_C":     "@",   # CP control 
+    "CP_T":     "P",   # CP target (P for phase)  
     "":         " ",   # empty
 }
 
@@ -264,9 +266,9 @@ def _render_grid(
                 next_cell = grid.get(row + 1, col)
                 # Draw | if this cell connects to row+1 or row+1 connects here
                 show_vert = (
-                    (cell.gate in ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B")
+                    (cell.gate in ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B", "CP_C", "CP_T")
                      and cell.linked_row == row + 1)
-                    or (next_cell.gate in ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B")
+                    or (next_cell.gate in ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B", "CP_C", "CP_T")
                         and next_cell.linked_row == row)
                 )
                 if show_vert:
@@ -286,6 +288,7 @@ def _render_grid(
     mode_labels = {
         "NORMAL":      "NORMAL",
         "CNOT_FIRST":  "CNOT: press [C] on control qubit (target locked)",
+        "CP_FIRST":    "CP: press [C] on control qubit (target locked)",
         "SWAP_FIRST":  "SWAP: press [W] on second qubit (first locked)",
     }
     lines.append(f"  Mode : {mode_labels.get(mode, mode)}")
@@ -295,7 +298,7 @@ def _render_grid(
     lines.append("")
 
     # Help
-    lines.append("  Gates : [H] [X] [D] [C]NOT [W]AP  |  [Backspace] delete  |  [?] gate help")
+    lines.append("  Gates : [H] [X] [D] [P]CP  [C]NOT [W]AP  |  [Backspace] delete  |  [?] gate help")
     lines.append("  Expand: [+] add column  [*] add qubit row")
     lines.append("  Action: [R]un  [E]xport  [I]mport  [Esc] reset  [Q]uit")
     lines.append("  Move  : Arrow keys")
@@ -446,6 +449,8 @@ class CircuitBuilder:
             self._place_single("SXdg")
 
         # Two-qubit gates
+        elif key == "p":
+            self._handle_cp()
         elif key == "c":
             self._handle_cnot()
         elif key == "w":
@@ -539,6 +544,36 @@ class CircuitBuilder:
             self.mode = "NORMAL"
             self.status = f"CNOT: ctrl=q[{r}], tgt=q[{tgt_row}], col {col}."
 
+    def _handle_cp(self):
+        r, c = self.cursor_row, self.cursor_col
+        if self.mode == "NORMAL":
+            # First press = TARGET
+            self.mode = "CP_FIRST"
+            self.pending_row = r
+            self.pending_col = c
+            self.grid.clear_cell(r, c)
+            self.grid.set(r, c, Cell(gate="CP_T", linked_row=-1))
+            self.status = f"CP target at q[{r}]. Navigate to control qubit, press [P]."
+        elif self.mode == "CP_FIRST":
+            # Second press = CONTROL (must be same column)
+            tgt_row = self.pending_row
+            col = self.pending_col
+            if c != col:
+                self.status = f"CP control must be in col {col} (same as target). Try again."
+                self.grid.clear_cell(tgt_row, col)
+                self.mode = "NORMAL"
+                return
+            if r == tgt_row:
+                self.status = "CP: control and target must be on different qubit rows."
+                self.grid.clear_cell(tgt_row, col)
+                self.mode = "NORMAL"
+                return
+            # Commit both cells
+            self.grid.set(tgt_row, col, Cell(gate="CP_T", linked_row=r))
+            self.grid.set(r, col, Cell(gate="CP_C", linked_row=tgt_row))
+            self.mode = "NORMAL"
+            self.status = f"CP: ctrl=q[{r}], tgt=q[{tgt_row}], col {col}."
+
     def _handle_swap(self):
         r, c = self.cursor_row, self.cursor_col
         if self.mode == "NORMAL":
@@ -596,6 +631,13 @@ class CircuitBuilder:
                     qc.x(row)
                 elif g == "SXdg":
                     qc.sxdg(row)
+                elif g == "CP_C":
+                    tgt = cell.linked_row
+                    if tgt >= 0:
+                        qc.cp(row, tgt, lam=3.141592653589793)
+                        handled.add(tgt)
+                elif g == "CP_T":
+                    pass  # handled when ctrl row is visited
                 elif g == "CNOT_C":
                     tgt = cell.linked_row
                     if tgt >= 0:
@@ -673,6 +715,20 @@ class CircuitBuilder:
                 f"  Linked control: q[{cell.linked_row}]",
                 "",
                 "See control qubit (@) for full gate description.",
+            ),
+            "CP_C": (
+                "CP Gate — control qubit (@)",
+                "This qubit is the control for a controlled-phase rotation.",
+                "When it is |1>, the linked target qubit acquires the phase e^(iλ).",
+                "",
+                f"  Linked target: q[{cell.linked_row}] (target)",
+            ),
+            "CP_T": (
+                "CP Gate — target qubit",
+                "This qubit receives the phase kick from the linked control qubit.",
+                "The effect is a phase e^(iλ) on the |11> basis state.",
+                "",
+                f"  Linked control: q[{cell.linked_row}]",
             ),
             "SWAP_A": (
                 "SWAP Gate",

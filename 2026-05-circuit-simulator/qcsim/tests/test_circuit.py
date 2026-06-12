@@ -292,6 +292,71 @@ class TestCZ:
         sv = qc.statevector()
         assert abs(sv[0] - 1.0) < 1e-10
 
+class TestCPhase:
+    def test_cphase_rotation(self):
+        """CPhase(θ)|11⟩ = e^(iθ)|11⟩"""
+        theta = np.pi / 4  # 45-degree phase shift
+        qc = QuantumCircuit(2)
+        qc.x(0).x(1).cp(theta, 0, 1)
+        sv = qc.statevector()
+        
+        # Expected value is e^(i*theta) = cos(theta) + i*sin(theta)
+        expected = np.exp(1j * theta)
+        
+        # |11⟩ is index 3
+        assert abs(sv[3] - expected) < 1e-10
+    
+    def test_cphase_no_flip_on_zero(self):
+        """CPhase(θ)|00⟩ = |00⟩ (no effect)"""
+        theta = np.pi / 3
+        qc = QuantumCircuit(2)
+        qc.cphase(theta, 0, 1)
+        sv = qc.statevector()
+        
+        # |00⟩ is index 0
+        assert abs(sv[0] - 1.0) < 1e-10
+    
+    def test_cphase_equivalence_to_cz(self):
+        """CPhase(π) should behave identically to a CZ gate"""
+        # CPhase with theta = pi
+        qc_cphase = QuantumCircuit(2)
+        qc_cphase.x(0).x(1).cphase(np.pi, 0, 1)
+        sv_cphase = qc_cphase.statevector()
+        
+        # Standard CZ
+        qc_cz = QuantumCircuit(2)
+        qc_cz.x(0).x(1).cz(0, 1)
+        sv_cz = qc_cz.statevector()
+        
+        # Check that both statevectors match completely
+        assert np.allclose(sv_cphase, sv_cz, atol=1e-10)
+
+    def test_cphase_no_flip_on_zero(self):
+        """CPhase(θ)|00⟩ = |00⟩ (no effect)"""
+        theta = np.pi / 3
+        qc = QuantumCircuit(2)
+        qc.cp(theta, 0, 1)
+        sv = qc.statevector()
+        
+        # |00⟩ is index 0
+        assert abs(sv[0] - 1.0) < 1e-10
+
+    def test_cphase_equivalence_to_cz(self):
+        """CPhase(π) should behave identically to a CZ gate"""
+        # CPhase with theta = pi
+        qc_cphase = QuantumCircuit(2)
+        qc_cphase.x(0).x(1).cp(np.pi, 0, 1)
+        sv_cphase = qc_cphase.statevector()
+        
+        # Standard CZ
+        qc_cz = QuantumCircuit(2)
+        qc_cz.x(0).x(1).cz(0, 1)
+        sv_cz = qc_cz.statevector()
+        
+        # Check that both statevectors match completely
+        assert np.allclose(sv_cphase, sv_cz, atol=1e-10)
+
+
 class TestSXdg:
     def test_sxdg_exact_amplitudes_on_zero(self):
         qc = QuantumCircuit(1)

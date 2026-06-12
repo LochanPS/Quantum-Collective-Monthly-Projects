@@ -251,6 +251,18 @@ def CZ_mat() -> np.ndarray:
     """
     return np.diag([1.0, 1.0, 1.0, -1.0]).astype(complex)
 
+def CP_mat(theta: float) -> np.ndarray:
+    """Controlled-phase gate matrix. Applies phase e^(iθ) to target when control is |1⟩.
+
+    CP(θ) = diag(1, 1, 1, e^(iθ))
+
+    Args:
+        theta: Phase angle in radians.
+
+    Returns:
+        4x4 complex array.
+    """
+    return np.diag([1.0, 1.0, 1.0, np.exp(1j * theta)]).astype(complex)
 
 def SWAP_mat() -> np.ndarray:
     """SWAP gate matrix. Exchanges two qubit states.
