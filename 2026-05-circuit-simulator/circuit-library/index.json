@@ -43,7 +43,7 @@
       "file": "ghz_4-2.json",
       "name": "ghz_4",
       "num_qubits": 4,
-      "num_gates": 4,
+      "num_gates": 7,
       "category": "entanglement",
       "difficulty": "beginner",
       "tags": [
@@ -52,7 +52,7 @@
         "ghz"
       ],
       "fingerprint": "53ac5ae9913daae9",
-      "author": "unknown",
+      "author": "QuantumImperator",
       "created_at": "2026-06-05",
       "version": "1.0",
       "verified": false

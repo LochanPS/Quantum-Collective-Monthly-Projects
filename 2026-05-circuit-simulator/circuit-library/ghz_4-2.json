@@ -55,9 +55,9 @@
     "entanglement",
     "ghz"
   ],
-  "source_url": "Nature, QuEra Computing",
+  "source_url": "",
   "created_at": "2026-06-05",
   "version": "1.0",
-  "num_gates": 4,
+  "num_gates": 7,
   "verified": false
 }
