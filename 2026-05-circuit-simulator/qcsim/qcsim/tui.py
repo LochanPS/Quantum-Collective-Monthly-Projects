@@ -27,6 +27,7 @@ from .visualize import draw_histogram, draw_statevector
 from .analyzer import analyze_grid
 from .patterns import recognize_grid
 from .fingerprint import compute as compute_fingerprint
+import numpy as np
 
 # ================================================================== #
 #  Cross-platform keyboard input
@@ -288,7 +289,7 @@ def _render_grid(
     mode_labels = {
         "NORMAL":      "NORMAL",
         "CNOT_FIRST":  "CNOT: press [C] on control qubit (target locked)",
-        "CP_FIRST":    "CP: press [C] on control qubit (target locked)",
+        "CP_FIRST":    "CP: press [P] on control qubit (target locked)",
         "SWAP_FIRST":  "SWAP: press [W] on second qubit (first locked)",
     }
     lines.append(f"  Mode : {mode_labels.get(mode, mode)}")
@@ -612,7 +613,7 @@ class CircuitBuilder:
     #  Build qcsim circuit from grid
     # ------------------------------------------------------------------ #
 
-    def _to_qcsim(self) -> QuantumCircuit:
+    def _to_qcsim(self, lam: float) -> QuantumCircuit:
         """Convert the grid to a runnable QuantumCircuit."""
         qc = QuantumCircuit(self.grid.num_qubits, backend=self.backend)
         n = self.grid.num_qubits
@@ -634,7 +635,7 @@ class CircuitBuilder:
                 elif g == "CP_C":
                     tgt = cell.linked_row
                     if tgt >= 0:
-                        qc.cp(row, tgt, lam=3.141592653589793)
+                        qc.cp(row, tgt, lam)
                         handled.add(tgt)
                 elif g == "CP_T":
                     pass  # handled when ctrl row is visited
@@ -781,8 +782,17 @@ class CircuitBuilder:
     def _run(self):
         _clear()
         print("  Running simulation...\n")
+        user_in = input("  Enter the value for lambda (e.g., 3.1415, 1.57, or 'pi'): ").strip()
         try:
-            qc = self._to_qcsim()
+            if user_in.lower() == 'pi':
+                lam_val = np.pi
+            elif user_in.lower() in ['pi/2', '0.5*pi']:
+                lam_val = np.pi / 2
+            elif user_in.lower() in ['pi/4', '0.25*pi']:
+                lam_val = np.pi / 4
+            else:
+                lam_val = float(user_in)
+            qc = self._to_qcsim(lam=lam_val)
             circ_str = qc.draw()
             sv_str = draw_statevector(qc)
             counts = qc.measure_all(shots=2048)

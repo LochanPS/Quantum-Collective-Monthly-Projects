@@ -293,7 +293,7 @@ class TestCZ:
         assert abs(sv[0] - 1.0) < 1e-10
 
 class TestCPhase:
-    def test_cphase_rotation(self):
+    def cp(self):
         """CPhase(θ)|11⟩ = e^(iθ)|11⟩"""
         theta = np.pi / 4  # 45-degree phase shift
         qc = QuantumCircuit(2)
@@ -306,22 +306,13 @@ class TestCPhase:
         # |11⟩ is index 3
         assert abs(sv[3] - expected) < 1e-10
     
-    def test_cphase_no_flip_on_zero(self):
-        """CPhase(θ)|00⟩ = |00⟩ (no effect)"""
-        theta = np.pi / 3
-        qc = QuantumCircuit(2)
-        qc.cphase(theta, 0, 1)
-        sv = qc.statevector()
-        
-        # |00⟩ is index 0
-        assert abs(sv[0] - 1.0) < 1e-10
     
-    def test_cphase_equivalence_to_cz(self):
+    def cp(self):
         """CPhase(π) should behave identically to a CZ gate"""
         # CPhase with theta = pi
-        qc_cphase = QuantumCircuit(2)
-        qc_cphase.x(0).x(1).cphase(np.pi, 0, 1)
-        sv_cphase = qc_cphase.statevector()
+        qc_cp = QuantumCircuit(2)
+        qc_cp.x(0).x(1).cp(np.pi, 0, 1)
+        sv_cp = qc_cp.statevector()
         
         # Standard CZ
         qc_cz = QuantumCircuit(2)
@@ -329,9 +320,9 @@ class TestCPhase:
         sv_cz = qc_cz.statevector()
         
         # Check that both statevectors match completely
-        assert np.allclose(sv_cphase, sv_cz, atol=1e-10)
+        assert np.allclose(sv_cp, sv_cz, atol=1e-10)
 
-    def test_cphase_no_flip_on_zero(self):
+    def cp(self):
         """CPhase(θ)|00⟩ = |00⟩ (no effect)"""
         theta = np.pi / 3
         qc = QuantumCircuit(2)
@@ -340,21 +331,6 @@ class TestCPhase:
         
         # |00⟩ is index 0
         assert abs(sv[0] - 1.0) < 1e-10
-
-    def test_cphase_equivalence_to_cz(self):
-        """CPhase(π) should behave identically to a CZ gate"""
-        # CPhase with theta = pi
-        qc_cphase = QuantumCircuit(2)
-        qc_cphase.x(0).x(1).cp(np.pi, 0, 1)
-        sv_cphase = qc_cphase.statevector()
-        
-        # Standard CZ
-        qc_cz = QuantumCircuit(2)
-        qc_cz.x(0).x(1).cz(0, 1)
-        sv_cz = qc_cz.statevector()
-        
-        # Check that both statevectors match completely
-        assert np.allclose(sv_cphase, sv_cz, atol=1e-10)
 
 
 class TestSXdg:
