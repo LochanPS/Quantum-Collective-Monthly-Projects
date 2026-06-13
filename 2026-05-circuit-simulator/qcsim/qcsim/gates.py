@@ -251,6 +251,57 @@ def CZ_mat() -> np.ndarray:
     """
     return np.diag([1.0, 1.0, 1.0, -1.0]).astype(complex)
 
+def CY_mat() -> np.ndarray:
+    """Controlled-Y gate matrix.
+
+    Applies Y to the target qubit when
+    the control qubit is |1>.
+
+    Basis ordering:
+        |00>, |01>, |10>, |11>
+
+    Returns:
+        4x4 complex array.
+    """
+    return np.array(
+        [
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 0, -1j],
+            [0, 0, 1j, 0],
+        ],
+        dtype=complex,
+    )
+
+def CP_mat(lam: float) -> np.ndarray:
+    """Controlled phase gate.
+
+    Applies a phase e^(i·λ) to |11⟩.
+
+    Basis ordering:
+        |00>, |01>, |10>, |11>
+
+    Args:
+        lam:
+            Phase angle in radians.
+
+    Returns:
+        4x4 complex array.
+    """
+    return np.diag(
+        [1, 1, 1, np.exp(1j * lam)]
+    ).astype(complex)
+
+def CCNOT_mat() -> np.ndarray:
+    mat = np.eye(8, dtype=complex)
+
+    mat[6, 6] = 0
+    mat[7, 7] = 0
+
+    mat[6, 7] = 1
+    mat[7, 6] = 1
+
+    return mat
 
 def SWAP_mat() -> np.ndarray:
     """SWAP gate matrix. Exchanges two qubit states.
@@ -261,7 +312,28 @@ def SWAP_mat() -> np.ndarray:
     return np.array(
         [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex
     )
+def CSWAP_mat() -> np.ndarray:
+    """Fredkin (controlled-SWAP) gate.
 
+    Swaps the two target qubits when
+    the control qubit is |1>.
+
+    Basis ordering:
+        |000>, |001>, |010>, |011>,
+        |100>, |101>, |110>, |111>
+
+    Returns:
+        8x8 complex array.
+    """
+    mat = np.eye(8, dtype=complex)
+
+    mat[5, 5] = 0
+    mat[6, 6] = 0
+
+    mat[5, 6] = 1
+    mat[6, 5] = 1
+
+    return mat
 
 # ================================================================== #
 #  Convenience: catalogue of all named single-qubit gates

@@ -357,6 +357,47 @@ class QuantumCircuit:
         else:
             self._apply(self._expand_controlled(gate, ctrl, tgt))
 
+    def cy(self,control: int,target: int) -> "QuantumCircuit":
+        """Apply Controlled-Y gate."""
+
+        self._check(control, "control")
+        self._check(target, "target")
+        self._check_distinct(control, target)
+
+        self._gate_controlled(
+            G.Y(),
+            control,
+            target
+        )
+
+        self._log.append(
+            ("CY", [control, target], None)
+        )
+
+        return self
+    def cp(self,control: int,target: int,lam: float) -> "QuantumCircuit":
+        """Apply controlled phase gate."""
+
+        self._check(control, "control")
+        self._check(target, "target")
+        self._check_distinct(control, target)
+
+        self._gate_controlled(
+            G.P(lam),
+            control,
+            target
+        )
+
+        self._log.append(
+            (
+                "CP",
+                [control, target],
+                {"lambda": lam}
+            )
+        )
+
+        return self
+
     def _gate_toffoli(self, c0: int, c1: int, tgt: int) -> None:
         """Dispatch Toffoli to the active backend."""
         if self.backend == "tensor":
