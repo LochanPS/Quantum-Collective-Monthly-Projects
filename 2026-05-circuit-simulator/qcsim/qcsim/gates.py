@@ -293,6 +293,16 @@ def CP_mat(lam: float) -> np.ndarray:
     ).astype(complex)
 
 def CCNOT_mat() -> np.ndarray:
+    """Toffoli (CCNOT) gate matrix.
+
+    Flips the target qubit when both control qubits are |1⟩.
+
+    Basis ordering:
+      |000⟩, |001⟩, |010⟩, |011⟩,
+       |100⟩, |101⟩, |110⟩, |111⟩
+    Returns:
+       8x8 complex array.
+   """
     mat = np.eye(8, dtype=complex)
 
     mat[6, 6] = 0
@@ -334,6 +344,7 @@ def CSWAP_mat() -> np.ndarray:
     mat[6, 5] = 1
 
     return mat
+
 
 # ================================================================== #
 #  Convenience: catalogue of all named single-qubit gates
