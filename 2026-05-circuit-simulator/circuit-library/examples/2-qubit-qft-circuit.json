@@ -1,0 +1,48 @@
+{
+  "name": "\"2-qubit QFT Circuit\"",
+  "num_qubits": 2,
+  "num_cols": 4,
+  "backend": "tensor",
+  "gates": [
+    {
+      "gate": "X",
+      "row": 0,
+      "col": 0
+    },
+    {
+      "gate": "CP_T",
+      "row": 0,
+      "col": 1,
+      "linked_row": 1
+    },
+    {
+      "gate": "H",
+      "row": 0,
+      "col": 2
+    },
+    {
+      "gate": "SWAP_A",
+      "row": 0,
+      "col": 3,
+      "linked_row": 1
+    },
+    {
+      "gate": "H",
+      "row": 1,
+      "col": 0
+    },
+    {
+      "gate": "CP_C",
+      "row": 1,
+      "col": 1,
+      "linked_row": 0
+    },
+    {
+      "gate": "SWAP_B",
+      "row": 1,
+      "col": 3,
+      "linked_row": 0
+    }
+  ],
+  "fingerprint": "cf27266904f07664"
+}
