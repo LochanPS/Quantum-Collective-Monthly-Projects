@@ -511,6 +511,7 @@ python examples/bell_state.py       # 2-qubit entanglement
 python examples/ghz_state.py        # 5-qubit entanglement
 python examples/deutsch_jozsa.py    # Quantum algorithm: oracle classification
 python examples/grover.py           # Quantum search algorithm
+python examples/qft.py              # Quantum Fourier Transform
 ```
 
 Each example prints: circuit diagram → state vector → measurement histogram.
