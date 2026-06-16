@@ -131,6 +131,10 @@ def _input(prompt: str) -> str:
 _GATE_DISPLAY: Dict[str, str] = {
     "H":        "H",
     "X":        "X",
+    "Y":        "Y",   # Pauli-Y gate
+    "Z":        "Z",   # Pauli-Z gate
+    "S":        "S",   # Phase gate
+    "T":        "T",   # π/8 gate
     "SXdg":     "D",   # SX-dagger gate
     "CNOT_C":   "@",   # CNOT control  (@  looks like a control dot)
     "CNOT_T":   "+",   # CNOT target   (+ looks like XOR/circle-plus)
@@ -320,7 +324,7 @@ def _render_grid(
     lines.append("")
 
     # Help
-    lines.append("  Gates : [H] [X] [D] [C]NOT S[W]AP  |  [Backspace] delete")
+    lines.append("  Gates : [H] [X] [Y] [Z] [S] [T] [D] [C]NOT S[W]AP  |  [Backspace] delete")
     lines.append("  Help  : [?] gate info")
     lines.append("  Expand: [+] add column  [*] add qubit row")
     lines.append("  Action: [R]un  [E]xport JSON  [Ctrl+K] py/qasm  [I]mport  [Q]uit")
@@ -469,6 +473,14 @@ class CircuitBuilder:
             self._place_single("H")
         elif key == "x":
             self._place_single("X")
+        elif key == "y":
+            self._place_single("Y")
+        elif key == "z":
+            self._place_single("Z")
+        elif key == "s":
+            self._place_single("S")
+        elif key == "t":
+            self._place_single("T")
         elif key == "d":
             self._place_single("SXdg")
 
