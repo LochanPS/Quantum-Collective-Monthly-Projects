@@ -6,9 +6,10 @@ Reusable QFT and inverse-QFT subroutines for qcsim.
 import math
 
 from .circuit import QuantumCircuit
+from typing import List
 
 
-def qft(qc: QuantumCircuit, qubits: list[int]) -> None:
+def qft(qc: QuantumCircuit, qubits: List[int]) -> None:
     """Apply the Quantum Fourier Transform in-place.
 
     Args:
@@ -29,7 +30,7 @@ def qft(qc: QuantumCircuit, qubits: list[int]) -> None:
         qc.swap(qubits[i], qubits[n - 1 - i])
 
 
-def inverse_qft(qc: QuantumCircuit, qubits: list[int]) -> None:
+def inverse_qft(qc: QuantumCircuit, qubits: List[int]) -> None:
     """Apply the inverse Quantum Fourier Transform in-place.
 
     Args:
