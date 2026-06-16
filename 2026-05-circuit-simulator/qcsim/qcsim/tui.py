@@ -635,6 +635,14 @@ class CircuitBuilder:
                     qc.h(row)
                 elif g == "X":
                     qc.x(row)
+                elif g == "Y":
+                    qc.y(row)
+                elif g == "Z":
+                    qc.z(row)
+                elif g == "S":
+                    qc.s(row)
+                elif g == "T":
+                    qc.t(row)
                 elif g == "SXdg":
                     qc.sxdg(row)
                 elif g == "CNOT_C":
@@ -683,6 +691,42 @@ class CircuitBuilder:
                 "X*X = Identity",
                 "",
                 "Use: Initialise qubits to |1>, flip bits, build CNOT.",
+            ),
+            "Y": (
+                "Pauli-Y Gate",
+                "Matrix: [[0, -i], [i, 0]]",
+                "Y|0> = i|1>",
+                "Y|1> = -i|0>",
+                "Y*Y = Identity",
+                "",
+                "Use: Bit flip + phase flip. Useful in rotations and error correction.",
+            ),
+            "Z": (
+                "Pauli-Z Gate",
+                "Matrix: [[1, 0], [0, -1]]",
+                "Z|0> = |0>",
+                "Z|1> = -|1>",
+                "Z*Z = Identity",
+                "",
+                "Use: Phase flip. Fundamental for phase-based quantum algorithms.",
+            ),
+            "S": (
+                "S Gate (Phase Gate)",
+                "Matrix: [[1, 0], [0, i]]",
+                "S|0> = |0>",
+                "S|1> = i|1>",
+                "S*S = Z",
+                "",
+                "Use: Applies a 90° phase rotation to |1>.",
+            ),
+            "T": (
+                "T Gate (π/8 Gate)",
+                "Matrix: [[1, 0], [0, exp(iπ/4)]]",
+                "T|0> = |0>",
+                "T|1> = exp(iπ/4)|1>",
+                "T*T = S",
+                "",
+                "Use: Fundamental non-Clifford gate for universal quantum computing.",
             ),
             "SXdg": (
                 "SX-dagger Gate",
@@ -738,6 +782,10 @@ class CircuitBuilder:
                 "Place a gate here:",
                 "  [H]  Hadamard          creates superposition",
                 "  [X]  Pauli-X           flips the qubit (NOT gate)",
+                "  [Y]  Pauli-Y           bit + phase flip",
+                "  [Z]  Pauli-Z           phase flip",
+                "  [S]  Phase gate        90° phase rotation",
+                "  [T]  π/8 gate          universal QC building block",
                 "  [C]  CNOT              controlled-NOT (two-qubit entanglement)",
                 "  [W]  SWAP              exchange two qubit states",
                 "",
