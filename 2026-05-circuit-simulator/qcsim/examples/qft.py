@@ -6,7 +6,6 @@ Run:
     python examples/qft.py
 """
 
-import math
 import os
 import sys
 
@@ -19,36 +18,13 @@ from qcsim import QuantumCircuit, banner, draw_statevector
 #  Quantum Fourier Transform
 # ================================================================== #
 
-def qft(qc: QuantumCircuit, qubits: list[int]) -> None:
-    """Apply the Quantum Fourier Transform in-place."""
-    n = len(qubits)
-
-    for i in range(n):
-        qc.h(qubits[i])
-
-        for j in range(i + 1, n):
-            angle = math.pi / (2 ** (j - i))
-            qc.cp(qubits[j], qubits[i], angle)
-
-    # Bit-reversal swaps
-    for i in range(n // 2):
-        qc.swap(qubits[i], qubits[n - 1 - i])
-
-def inverse_qft(qc: QuantumCircuit, qubits: list[int]) -> None:
-    """Apply the inverse Quantum Fourier Transform in-place."""
-    n = len(qubits)
-
-    # Undo bit-reversal swaps
-    for i in range(n // 2):
-        qc.swap(qubits[i], qubits[n - 1 - i])
-
-    for i in reversed(range(n)):
-        for j in reversed(range(i + 1, n)):
-            angle = -math.pi / (2 ** (j - i))
-            qc.cp(qubits[j], qubits[i], angle)
-
-        qc.h(qubits[i])
-
+from qcsim import (
+    QuantumCircuit,
+    banner,
+    draw_statevector,
+    qft,
+    inverse_qft,
+)
 
 # ================================================================== #
 #  Main
