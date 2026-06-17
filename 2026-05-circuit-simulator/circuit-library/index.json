@@ -40,8 +40,8 @@
       "verified": true
     },
     {
-      "file": "ghz_4-2.json",
-      "name": "ghz_4",
+      "file": "examples/ghz-4.json",
+      "name": "GHZ State (4 qubits)",
       "num_qubits": 4,
       "num_gates": 7,
       "category": "entanglement",

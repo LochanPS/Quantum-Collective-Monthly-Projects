@@ -1,5 +1,5 @@
 {
-  "name": "ghz_4",
+  "name": "GHZ State (4 qubits)",
   "num_qubits": 4,
   "num_cols": 4,
   "backend": "kronecker",
@@ -47,7 +47,7 @@
     }
   ],
   "fingerprint": "53ac5ae9913daae9",
-  "description": "It implements a 4 qubit GHZ (Greenberger-Horne-Zeilinger) state using hadamard and cnot gates.",
+  "description": "4-qubit GHZ (Greenberger-Horne-Zeilinger) state: H on q[0] then CNOT chain q[0]->q[1]->q[2]->q[3]. Produces (|0000> + |1111>) / sqrt(2).",
   "category": "entanglement",
   "difficulty": "beginner",
   "tags": [
@@ -56,6 +56,7 @@
     "ghz"
   ],
   "source_url": "",
+  "author": "QuantumImperator",
   "created_at": "2026-06-05",
   "version": "1.0",
   "num_gates": 7,
