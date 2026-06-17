@@ -322,28 +322,6 @@ def SWAP_mat() -> np.ndarray:
     return np.array(
         [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex
     )
-def CSWAP_mat() -> np.ndarray:
-    """Fredkin (controlled-SWAP) gate.
-
-    Swaps the two target qubits when
-    the control qubit is |1>.
-
-    Basis ordering:
-        |000>, |001>, |010>, |011>,
-        |100>, |101>, |110>, |111>
-
-    Returns:
-        8x8 complex array.
-    """
-    mat = np.eye(8, dtype=complex)
-
-    mat[5, 5] = 0
-    mat[6, 6] = 0
-
-    mat[5, 6] = 1
-    mat[6, 5] = 1
-
-    return mat
 
 
 # ================================================================== #

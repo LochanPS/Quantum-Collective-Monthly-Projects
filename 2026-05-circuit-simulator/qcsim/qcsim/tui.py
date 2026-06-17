@@ -140,6 +140,8 @@ _GATE_DISPLAY: Dict[str, str] = {
     "CNOT_T":   "+",   # CNOT target   (+ looks like XOR/circle-plus)
     "SWAP_A":   "~",   # SWAP endpoint A
     "SWAP_B":   "~",   # SWAP endpoint B
+    "CP_C":     "#",   # CP control    (# for phase)
+    "CP_T":     "P",   # CP target     (P for phase)
     "":         " ",   # empty
 }
 
@@ -149,6 +151,7 @@ _KEY_TO_GATE: Dict[str, str] = {
     "x": "X",
     "c": "CNOT",
     "w": "SWAP",
+    "p": "CP",
 }
 
 _BASIC_GATES = ["H", "X", "CNOT", "SWAP"]
@@ -163,6 +166,7 @@ class Cell:
     """One slot in the circuit grid."""
     gate: str = ""          # gate type or '' for empty
     linked_row: int = -1    # for two-qubit gates: the row of the partner qubit
+    params: Optional[dict] = None  # extra gate parameters (e.g. {"lam": 1.57} for CP)
 
 
 @dataclass
@@ -222,6 +226,8 @@ class CircuitGrid:
                     entry: dict = {"gate": c.gate, "row": row, "col": col}
                     if c.linked_row >= 0:
                         entry["linked_row"] = c.linked_row
+                    if c.params:
+                        entry["params"] = c.params
                     gates.append(entry)
         data = {
             "name": name,
@@ -239,7 +245,8 @@ class CircuitGrid:
         for entry in data.get("gates", []):
             row, col = entry["row"], entry["col"]
             linked = entry.get("linked_row", -1)
-            grid.cells[row][col] = Cell(gate=entry["gate"], linked_row=linked)
+            params = entry.get("params", None)
+            grid.cells[row][col] = Cell(gate=entry["gate"], linked_row=linked, params=params)
         return grid
 
 
@@ -293,9 +300,9 @@ def _render_grid(
                 next_cell = grid.get(row + 1, col)
                 # Draw | if this cell connects to row+1 or row+1 connects here
                 show_vert = (
-                    (cell.gate in ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B")
+                    (cell.gate in ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B", "CP_C", "CP_T")
                      and cell.linked_row == row + 1)
-                    or (next_cell.gate in ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B")
+                    or (next_cell.gate in ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B", "CP_C", "CP_T")
                         and next_cell.linked_row == row)
                 )
                 if show_vert:
@@ -316,6 +323,7 @@ def _render_grid(
         "NORMAL":      "NORMAL",
         "CNOT_FIRST":  "CNOT: press [C] on control qubit (target locked)",
         "SWAP_FIRST":  "SWAP: press [W] on second qubit (first locked)",
+        "CP_FIRST":    "CP: press [P] on control qubit (target locked)",
     }
     lines.append(f"  Mode : {mode_labels.get(mode, mode)}")
     lines.append(f"  Pos  : q[{cursor_row}], col {cursor_col}")
@@ -324,7 +332,7 @@ def _render_grid(
     lines.append("")
 
     # Help
-    lines.append("  Gates : [H] [X] [Y] [Z] [S] [T] [D] [C]NOT S[W]AP  |  [Backspace] delete")
+    lines.append("  Gates : [H] [X] [Y] [Z] [S] [T] [D] [C]NOT S[W]AP [P]CP  |  [Backspace] delete")
     lines.append("  Help  : [?] gate info")
     lines.append("  Expand: [+] add column  [*] add qubit row")
     lines.append("  Action: [R]un  [E]xport JSON  [Ctrl+K] py/qasm  [I]mport  [Q]uit")
@@ -349,6 +357,7 @@ class CircuitBuilder:
         self.mode: str = "NORMAL"
         self.pending_row: int = -1
         self.pending_col: int = -1
+        self.pending_lam: float = 0.0
         self.status: str = ""
         self._resize_flag: bool = False  # set by SIGWINCH handler
 
@@ -489,6 +498,8 @@ class CircuitBuilder:
             self._handle_cnot()
         elif key == "w":
             self._handle_swap()
+        elif key == "p":
+            self._handle_cp()
 
         # Delete
         elif key == "backspace":
@@ -607,6 +618,43 @@ class CircuitBuilder:
             self.mode = "NORMAL"
             self.status = f"SWAP: q[{a_row}] <-> q[{r}], col {col}."
 
+    def _handle_cp(self):
+        import math
+        r, c = self.cursor_row, self.cursor_col
+        if self.mode == "NORMAL":
+            # First press = TARGET; prompt for phase angle
+            raw = _input("  CP phase angle (e.g. pi/2, pi, 0.785): ").strip()
+            try:
+                lam = float(eval(raw, {"pi": math.pi, "π": math.pi}))
+            except Exception:
+                self.status = f"Invalid angle {raw!r}. CP cancelled."
+                return
+            self.mode = "CP_FIRST"
+            self.pending_row = r
+            self.pending_col = c
+            self.pending_lam = lam
+            self.grid.clear_cell(r, c)
+            self.grid.set(r, c, Cell(gate="CP_T", linked_row=-1))
+            self.status = f"CP target at q[{r}], λ={raw}. Navigate to control qubit, press [P]."
+        elif self.mode == "CP_FIRST":
+            tgt_row = self.pending_row
+            col = self.pending_col
+            if c != col:
+                self.status = f"CP control must be in col {col} (same as target). Try again."
+                self.grid.clear_cell(tgt_row, col)
+                self.mode = "NORMAL"
+                return
+            if r == tgt_row:
+                self.status = "CP: control and target must be on different qubit rows."
+                self.grid.clear_cell(tgt_row, col)
+                self.mode = "NORMAL"
+                return
+            lam = self.pending_lam
+            self.grid.set(tgt_row, col, Cell(gate="CP_T", linked_row=r))
+            self.grid.set(r, col, Cell(gate="CP_C", linked_row=tgt_row, params={"lam": lam}))
+            self.mode = "NORMAL"
+            self.status = f"CP: ctrl=q[{r}], tgt=q[{tgt_row}], λ={lam:.4g}, col {col}."
+
     def _delete(self):
         r, c = self.cursor_row, self.cursor_col
         self.grid.clear_cell(r, c)
@@ -659,6 +707,13 @@ class CircuitBuilder:
                         handled.add(other)
                 elif g == "SWAP_B":
                     pass  # handled by SWAP_A
+                elif g == "CP_C":
+                    tgt = cell.linked_row
+                    if tgt >= 0 and cell.params:
+                        qc.cp(row, tgt, cell.params["lam"])
+                        handled.add(tgt)
+                elif g == "CP_T":
+                    pass  # handled when ctrl row is visited
                 handled.add(row)
         return qc
 
@@ -775,6 +830,27 @@ class CircuitBuilder:
                 f"  Swapping with q[{cell.linked_row}].",
                 "See first SWAP qubit for full description.",
             ),
+            "CP_C": (
+                "CP Gate — Control qubit (#)",
+                "Controlled-Phase gate. Applies e^(iλ) to |11⟩.",
+                "",
+                "  |00> -> |00>",
+                "  |01> -> |01>",
+                "  |10> -> |10>",
+                "  |11> -> e^(iλ)|11>",
+                "",
+                f"  λ = {cell.params['lam']:.6g} rad" if cell.params else "  λ = (not set)",
+                f"  This is the CONTROL qubit. Target: q[{cell.linked_row}].",
+                "",
+                "Use: λ=π gives CZ gate. Fundamental for QFT phase rotations.",
+            ),
+            "CP_T": (
+                "CP Gate — Target qubit (P)",
+                "This qubit picks up phase e^(iλ) when both qubits are |1>.",
+                f"  Linked control: q[{cell.linked_row}]",
+                "",
+                "See control qubit (#) for full gate description.",
+            ),
             "": (
                 "Empty Cell",
                 f"  Position: q[{self.cursor_row}], col {self.cursor_col}",
@@ -788,6 +864,7 @@ class CircuitBuilder:
                 "  [T]  π/8 gate          universal QC building block",
                 "  [C]  CNOT              controlled-NOT (two-qubit entanglement)",
                 "  [W]  SWAP              exchange two qubit states",
+                "  [P]  CP               controlled-phase (e^(iλ) on |11⟩)",
                 "",
                 "Navigate with arrow keys. [Backspace] to delete.",
             ),

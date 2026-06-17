@@ -11,13 +11,6 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from qcsim import QuantumCircuit, banner, draw_statevector
-
-
-# ================================================================== #
-#  Quantum Fourier Transform
-# ================================================================== #
-
 from qcsim import (
     QuantumCircuit,
     banner,
