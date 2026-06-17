@@ -332,7 +332,8 @@ def _render_grid(
     lines.append("")
 
     # Help
-    lines.append("  Gates : [H] [X] [Y] [Z] [S] [T] [D] [C]NOT S[W]AP [P]CP  |  [Backspace] delete")
+    lines.append("  Gates : [H] [X] [Y] [Z] [S] [T] [D]  |  [Backspace] delete")
+    lines.append("  Multi : [C]NOT  S[W]AP  [P]CP")
     lines.append("  Help  : [?] gate info")
     lines.append("  Expand: [+] add column  [*] add qubit row")
     lines.append("  Action: [R]un  [E]xport JSON  [Ctrl+K] py/qasm  [I]mport  [Q]uit")
