@@ -30,6 +30,7 @@ from .exceptions import CircuitCompositionError, GateError, QCSimError, QubitInd
 from . import gates
 from .state import QuantumState
 from .visualize import banner, draw_histogram, draw_statevector
+from .qft import qft, inverse_qft
 
 __version__ = "0.1.0"
 __author__ = "Quantum Collective"
@@ -47,4 +48,7 @@ __all__ = [
     "banner",
     "draw_statevector",
     "draw_histogram",
+    #Algorithms
+    "qft",
+    "inverse_qft",
 ]
