@@ -357,6 +357,9 @@ class QuantumCircuit:
         else:
             self._apply(self._expand_controlled(gate, ctrl, tgt))
 
+    
+    
+
     def _gate_toffoli(self, c0: int, c1: int, tgt: int) -> None:
         """Dispatch Toffoli to the active backend."""
         if self.backend == "tensor":
