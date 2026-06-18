@@ -8,7 +8,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from qcsim import QuantumCircuit
+from qcsim import QuantumCircuit, qft, inverse_qft
 from qcsim.exceptions import QubitIndexError
 
 
@@ -497,6 +497,33 @@ class TestAlgorithms:
         # After 1 Grover iteration on 2 qubits, |11⟩ should dominate
         assert probs.get("11", 0) > 0.95
 
+    def test_qft_iqft_recovers_basis_state(self):
+        """QFT followed by IQFT should recover |101⟩."""
+        qc = QuantumCircuit(3)
+
+        qc.x(0)
+        qc.x(2)
+
+        original = qc.statevector().copy()
+
+        qft(qc, [0, 1, 2])
+        inverse_qft(qc, [0, 1, 2])
+
+        assert np.allclose(original, qc.statevector())
+
+    def test_qft_iqft_recovers_superposition(self):
+        """QFT followed by IQFT should recover a superposition state."""
+        qc = QuantumCircuit(3)
+
+        qc.h(0)
+        qc.h(1)
+
+        original = qc.statevector().copy()
+
+        qft(qc, [0, 1, 2])
+        inverse_qft(qc, [0, 1, 2])
+
+        assert np.allclose(original, qc.statevector())
 
 # ================================================================== #
 #  Qiskit export
