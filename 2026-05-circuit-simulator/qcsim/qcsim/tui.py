@@ -1021,55 +1021,93 @@ class CircuitBuilder:
     #  Qiskit export
     # ------------------------------------------------------------------ #
 
+    # Export format registry: choice -> (extension, builder, hint lines)
+    _EXPORT_FORMATS = {
+        "1": (
+            "_qiskit.py",
+            lambda qc: qc.to_qiskit_code(var="qc"),
+            lambda path: (
+                "  Run it:  python " + path,
+                "  Needs:   pip install qiskit qiskit-aer",
+                "  IBM run: pip install qiskit-ibm-runtime",
+            ),
+        ),
+        "2": (
+            ".qasm",
+            lambda qc: qc.to_qasm2(),
+            lambda path: (
+                "  Load in Qiskit: QuantumCircuit.from_qasm_file('" + path + "')",
+                "  Load in Cirq:   cirq.from_qasm(open('" + path + "').read())",
+                "  Compatible with: IBM Quantum, Google Cirq, Amazon Braket",
+            ),
+        ),
+        "3": (
+            "_cirq.py",
+            lambda qc: qc.to_cirq_code(var="circuit"),
+            lambda path: (
+                "  Run it:  python " + path,
+                "  Needs:   pip install cirq",
+                "",
+            ),
+        ),
+        "4": (
+            ".qasm3",
+            lambda qc: qc.to_qasm3(),
+            lambda path: (
+                "  Load in Qiskit 1.0+: from qiskit.qasm3 import loads",
+                "  Successor to OpenQASM 2.0 — used by newer IBM tooling",
+                "",
+            ),
+        ),
+        "5": (
+            ".quil",
+            lambda qc: qc.to_quil(),
+            lambda path: (
+                "  Needs:   pip install pyquil",
+                "  Run on:  Rigetti QVM (local) or real Rigetti hardware",
+                "",
+            ),
+        ),
+    }
+
     def _export_qiskit(self):
         _clear()
         print("  Export circuit code\n")
         print("  Format:")
         print("    [1] Qiskit Python (.py)  — run on IBM Quantum or Aer simulator")
         print("    [2] OpenQASM 2.0  (.qasm) — universal, works with Qiskit/Cirq/Braket")
+        print("    [3] Cirq Python (.py)    — run on Google Cirq simulator")
+        print("    [4] OpenQASM 3.0 (.qasm3) — successor format, Qiskit 1.0+")
+        print("    [5] Quil (.quil)         — Rigetti pyQuil / QVM")
         print()
-        fmt = _input("  Choose [1/2, default 1]: ").strip() or "1"
-        if fmt not in ("1", "2"):
+        fmt = _input("  Choose [1-5, default 1]: ").strip() or "1"
+        if fmt not in self._EXPORT_FORMATS:
             print("  Invalid choice.")
             print()
             _input("  Press Enter to continue...")
             return
 
+        ext, build_code, build_hints = self._EXPORT_FORMATS[fmt]
         name = _input("  Circuit name [untitled]: ") or "untitled"
         safe_name = name.lower().replace(" ", "_")
-
-        if fmt == "1":
-            default_path = f"{safe_name}_qiskit.py"
-            path = _input(f"  Save path [{default_path}]: ") or default_path
-            if not path.endswith(".py"):
-                path += ".py"
-        else:
-            default_path = f"{safe_name}.qasm"
-            path = _input(f"  Save path [{default_path}]: ") or default_path
-            if not path.endswith(".qasm"):
-                path += ".qasm"
+        default_path = f"{safe_name}{ext}"
+        path = _input(f"  Save path [{default_path}]: ") or default_path
+        if not path.endswith(ext):
+            path += ext
 
         try:
             qc = self._to_qcsim()
-            if fmt == "1":
-                code = qc.to_qiskit_code(var="qc")
-                hint1 = "  Run it:  python " + path
-                hint2 = "  Needs:   pip install qiskit qiskit-aer"
-                hint3 = "  IBM run: pip install qiskit-ibm-runtime"
-            else:
-                code = qc.to_qasm2()
-                hint1 = "  Load in Qiskit: QuantumCircuit.from_qasm_file('" + path + "')"
-                hint2 = "  Load in Cirq:   cirq.from_qasm(open('" + path + "').read())"
-                hint3 = "  Compatible with: IBM Quantum, Google Cirq, Amazon Braket"
+            code = build_code(qc)
+            hints = build_hints(path)
 
             abs_path = os.path.abspath(path)
             with open(path, "w") as f:
                 f.write(code)
             print(f"\n  Saved: {_file_link(abs_path)}")
             print()
-            print(hint1)
-            print(hint2)
-            print(hint3)
+            for hint in hints:
+                if hint:
+                    print(hint)
         except Exception as exc:
             print(f"  Error: {exc}")
 
