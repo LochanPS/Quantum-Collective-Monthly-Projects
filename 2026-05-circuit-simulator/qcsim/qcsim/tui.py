@@ -142,6 +142,8 @@ _GATE_DISPLAY: Dict[str, str] = {
     "SWAP_B":   "~",   # SWAP endpoint B
     "CP_C":     "#",   # CP control    (# for phase)
     "CP_T":     "P",   # CP target     (P for phase)
+    "CY_C":     "@",   # CY control    (@ same as CNOT control)
+    "CY_T":     "Y",   # CY target     (Y for Pauli-Y)
     "":         " ",   # empty
 }
 
@@ -152,6 +154,7 @@ _KEY_TO_GATE: Dict[str, str] = {
     "c": "CNOT",
     "w": "SWAP",
     "p": "CP",
+    "v": "CY",
 }
 
 _BASIC_GATES = ["H", "X", "CNOT", "SWAP"]
@@ -299,11 +302,10 @@ def _render_grid(
                 cell = grid.get(row, col)
                 next_cell = grid.get(row + 1, col)
                 # Draw | if this cell connects to row+1 or row+1 connects here
+                _LINKED_GATES = ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B", "CP_C", "CP_T", "CY_C", "CY_T")
                 show_vert = (
-                    (cell.gate in ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B", "CP_C", "CP_T")
-                     and cell.linked_row == row + 1)
-                    or (next_cell.gate in ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B", "CP_C", "CP_T")
-                        and next_cell.linked_row == row)
+                    (cell.gate in _LINKED_GATES and cell.linked_row == row + 1)
+                    or (next_cell.gate in _LINKED_GATES and next_cell.linked_row == row)
                 )
                 if show_vert:
                     conn += "   |  "
@@ -324,6 +326,7 @@ def _render_grid(
         "CNOT_FIRST":  "CNOT: press [C] on control qubit (target locked)",
         "SWAP_FIRST":  "SWAP: press [W] on second qubit (first locked)",
         "CP_FIRST":    "CP: press [P] on control qubit (target locked)",
+        "CY_FIRST":    "CY: press [V] on control qubit (target locked)",
     }
     lines.append(f"  Mode : {mode_labels.get(mode, mode)}")
     lines.append(f"  Pos  : q[{cursor_row}], col {cursor_col}")
@@ -333,7 +336,7 @@ def _render_grid(
 
     # Help
     lines.append("  Gates : [H] [X] [Y] [Z] [S] [T] [D]  |  [Backspace] delete")
-    lines.append("  Multi : [C]NOT  S[W]AP  [P]CP")
+    lines.append("  Multi : [C]NOT  S[W]AP  [P]CP  [V]CY")
     lines.append("  Help  : [?] gate info")
     lines.append("  Expand: [+] add column  [*] add qubit row")
     lines.append("  Action: [R]un  [E]xport JSON  [Ctrl+K] py/qasm  [I]mport  [Q]uit")
@@ -501,6 +504,8 @@ class CircuitBuilder:
             self._handle_swap()
         elif key == "p":
             self._handle_cp()
+        elif key == "v":
+            self._handle_cy()
 
         # Delete
         elif key == "backspace":
@@ -656,6 +661,34 @@ class CircuitBuilder:
             self.mode = "NORMAL"
             self.status = f"CP: ctrl=q[{r}], tgt=q[{tgt_row}], λ={lam:.4g}, col {col}."
 
+    def _handle_cy(self):
+        r, c = self.cursor_row, self.cursor_col
+        if self.mode == "NORMAL":
+            # First press = TARGET
+            self.mode = "CY_FIRST"
+            self.pending_row = r
+            self.pending_col = c
+            self.grid.clear_cell(r, c)
+            self.grid.set(r, c, Cell(gate="CY_T", linked_row=-1))
+            self.status = f"CY target at q[{r}]. Navigate to control qubit, press [V]."
+        elif self.mode == "CY_FIRST":
+            tgt_row = self.pending_row
+            col = self.pending_col
+            if c != col:
+                self.status = f"CY control must be in col {col} (same as target). Try again."
+                self.grid.clear_cell(tgt_row, col)
+                self.mode = "NORMAL"
+                return
+            if r == tgt_row:
+                self.status = "CY: control and target must be on different qubit rows."
+                self.grid.clear_cell(tgt_row, col)
+                self.mode = "NORMAL"
+                return
+            self.grid.set(tgt_row, col, Cell(gate="CY_T", linked_row=r))
+            self.grid.set(r, col, Cell(gate="CY_C", linked_row=tgt_row))
+            self.mode = "NORMAL"
+            self.status = f"CY: ctrl=q[{r}], tgt=q[{tgt_row}], col {col}."
+
     def _delete(self):
         r, c = self.cursor_row, self.cursor_col
         self.grid.clear_cell(r, c)
@@ -714,6 +747,13 @@ class CircuitBuilder:
                         qc.cp(row, tgt, cell.params["lam"])
                         handled.add(tgt)
                 elif g == "CP_T":
+                    pass  # handled when ctrl row is visited
+                elif g == "CY_C":
+                    tgt = cell.linked_row
+                    if tgt >= 0:
+                        qc.cy(row, tgt)
+                        handled.add(tgt)
+                elif g == "CY_T":
                     pass  # handled when ctrl row is visited
                 handled.add(row)
         return qc
@@ -852,6 +892,28 @@ class CircuitBuilder:
                 "",
                 "See control qubit (#) for full gate description.",
             ),
+            "CY_C": (
+                "CY Gate — Control qubit (@)",
+                "4x4 matrix acting on 2 qubits.",
+                "Applies Y to the target qubit when this control qubit is |1>.",
+                "",
+                "  |00> -> |00>   (control=0, target unchanged)",
+                "  |01> -> |01>",
+                "  |10> -> i|11>  (control=1, target gets Y applied)",
+                "  |11> -> -i|10>",
+                "",
+                "Use: Bit + phase flip under control. Less common than CNOT/CZ",
+                "     but appears in some error-correction and teleportation circuits.",
+                "",
+                f"  This is the CONTROL qubit. Linked to q[{cell.linked_row}] (target).",
+            ),
+            "CY_T": (
+                "CY Gate — Target qubit (Y)",
+                "Y is applied to this qubit when the control qubit is |1>.",
+                f"  Linked control: q[{cell.linked_row}]",
+                "",
+                "See control qubit (@) for full gate description.",
+            ),
             "": (
                 "Empty Cell",
                 f"  Position: q[{self.cursor_row}], col {self.cursor_col}",
@@ -866,6 +928,7 @@ class CircuitBuilder:
                 "  [C]  CNOT              controlled-NOT (two-qubit entanglement)",
                 "  [W]  SWAP              exchange two qubit states",
                 "  [P]  CP               controlled-phase (e^(iλ) on |11⟩)",
+                "  [V]  CY               controlled-Y",
                 "",
                 "Navigate with arrow keys. [Backspace] to delete.",
             ),

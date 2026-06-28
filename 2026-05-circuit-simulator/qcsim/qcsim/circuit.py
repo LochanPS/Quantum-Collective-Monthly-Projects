@@ -917,14 +917,32 @@ class QuantumCircuit:
         self._log.append(("BARRIER", list(range(self.num_qubits)), {"label": label}))
         return self
 
-    def reset(self) -> "QuantumCircuit":
-        """Reset all qubits to |0⟩ and clear the gate log.
+    def reset(self, qubit: Optional[int] = None) -> "QuantumCircuit":
+        """Reset one qubit, or the whole circuit, to |0⟩.
+
+        Args:
+            qubit: If given, reset only this qubit (measure it, then flip
+                back to |0⟩ if it read 1 — other qubits keep whatever
+                state survives that collapse). If omitted, reset every
+                qubit to |0...0⟩ and clear the gate log entirely.
 
         Returns:
             Self, for method chaining.
+
+        Raises:
+            QubitIndexError: If `qubit` is given and out of range.
         """
-        self._state.reset()
-        self._log.clear()
+        if qubit is None:
+            self._state.reset()
+            self._log.clear()
+            return self
+        self._check(qubit)
+        p1 = self._state.prob_one(qubit)
+        outcome = 1 if np.random.random() < p1 else 0
+        self._state.collapse(qubit, outcome)
+        if outcome == 1:
+            self._gate_single(G.X(), qubit)
+        self._log.append(("RESET", [qubit], None))
         return self
 
     def compose(self, other: "QuantumCircuit") -> "QuantumCircuit":
@@ -986,6 +1004,48 @@ class QuantumCircuit:
         if name in dispatch:
             dispatch[name]()
 
+    # Gate-inversion tables for inverse()
+    _SELF_INVERSE_GATES = {"I", "H", "X", "Y", "Z", "CNOT", "CY", "CZ", "SWAP", "CCX"}
+    _ADJOINT_PAIRS = {"S": "Sdg", "Sdg": "S", "T": "Tdg", "Tdg": "T", "SX": "SXdg", "SXdg": "SX"}
+    _NEGATE_PARAM_KEY = {"Rx": "theta", "Ry": "theta", "Rz": "theta", "P": "lam", "CP": "lam"}
+    _NON_UNITARY_GATES = {"MEASURE", "RESET", "BARRIER"}
+
+    def inverse(self) -> "QuantumCircuit":
+        """Return a new circuit that undoes this one.
+
+        Built by reversing the gate order and conjugate-transposing each
+        gate: self-inverse gates (H, X, Y, Z, CNOT, CY, CZ, SWAP, Toffoli)
+        are unchanged, adjoint pairs swap (S<->Sdg, T<->Tdg, SX<->SXdg),
+        and parametric gates (Rx, Ry, Rz, P, CP) get their angle negated.
+
+        Returns:
+            New QuantumCircuit, starting from |0...0>, that applies the
+            inverse sequence. Does not modify this circuit.
+
+        Raises:
+            GateError: If the circuit contains MEASURE, RESET, or BARRIER —
+                these are not unitary and have no well-defined inverse.
+        """
+        inv = QuantumCircuit(self.num_qubits, backend=self.backend)
+        for name, qubits, params in reversed(self._log):
+            if name in self._NON_UNITARY_GATES:
+                raise GateError(
+                    f"Cannot invert a circuit containing non-unitary operation "
+                    f"{name!r}. Remove measurements/resets/barriers first."
+                )
+            if name in self._SELF_INVERSE_GATES:
+                inv._replay_gate(name, qubits, params)
+            elif name in self._ADJOINT_PAIRS:
+                inv._replay_gate(self._ADJOINT_PAIRS[name], qubits, params)
+            elif name in self._NEGATE_PARAM_KEY:
+                key = self._NEGATE_PARAM_KEY[name]
+                negated = dict(params)
+                negated[key] = -params[key]
+                inv._replay_gate(name, qubits, negated)
+            else:
+                raise GateError(f"inverse() does not know how to invert gate {name!r}.")
+        return inv
+
     # ================================================================== #
     #  Readout
     # ================================================================== #
@@ -1035,6 +1095,30 @@ class QuantumCircuit:
         labels = [self._state.label(int(i)) for i in indices]
         return dict(Counter(labels))
 
+    def measure(self, qubit: int) -> int:
+        """Measure a single qubit, collapsing the state vector.
+
+        Unlike `measure_all()`, this mutates the circuit's state: the
+        measured qubit's amplitudes are projected onto the sampled outcome
+        and the remaining amplitudes are renormalised. Other qubits keep
+        whatever entanglement/superposition survives the projection.
+
+        Args:
+            qubit: Qubit index to measure.
+
+        Returns:
+            The measured bit, 0 or 1.
+
+        Raises:
+            QubitIndexError: If the qubit index is out of range.
+        """
+        self._check(qubit)
+        p1 = self._state.prob_one(qubit)
+        outcome = 1 if np.random.random() < p1 else 0
+        self._state.collapse(qubit, outcome)
+        self._log.append(("MEASURE", [qubit], {"outcome": outcome}))
+        return outcome
+
     def expectation_value(self, observable: np.ndarray) -> float:
         """Compute ⟨ψ|O|ψ⟩ for a Hermitian observable O.
 
@@ -1068,6 +1152,59 @@ class QuantumCircuit:
             f"QuantumCircuit(num_qubits={self.num_qubits}, "
             f"gates={len(self._log)})"
         )
+
+    def __eq__(self, other: object) -> bool:
+        """Structural equality: same qubit count and same gate sequence.
+
+        Two circuits are equal if they have the same number of qubits and
+        their gate logs match entry-by-entry (name, qubits, params).
+        Floating-point parameters (rotation angles, phases) are compared
+        with a small tolerance rather than exact equality. This compares
+        the *circuit description*, not the resulting state vector — two
+        circuits that produce the same state via different gates are NOT
+        considered equal.
+
+        Args:
+            other: Object to compare against.
+
+        Returns:
+            True if structurally equal, False otherwise (including if
+            `other` is not a QuantumCircuit).
+        """
+        if not isinstance(other, QuantumCircuit):
+            return NotImplemented
+        if self.num_qubits != other.num_qubits:
+            return False
+        if len(self._log) != len(other._log):
+            return False
+        for (n1, q1, p1), (n2, q2, p2) in zip(self._log, other._log):
+            if n1 != n2 or q1 != q2:
+                return False
+            if not self._params_close(p1, p2):
+                return False
+        return True
+
+    @staticmethod
+    def _params_close(p1: Optional[dict], p2: Optional[dict]) -> bool:
+        """Compare two gate-parameter dicts, tolerant of float drift."""
+        if p1 is None or p2 is None:
+            return p1 == p2
+        if p1.keys() != p2.keys():
+            return False
+        for key in p1:
+            v1, v2 = p1[key], p2[key]
+            if isinstance(v1, (int, float)) and isinstance(v2, (int, float)):
+                if not np.isclose(v1, v2):
+                    return False
+            elif v1 != v2:
+                return False
+        return True
+
+    def __ne__(self, other: object) -> bool:
+        result = self.__eq__(other)
+        if result is NotImplemented:
+            return result
+        return not result
 
     def summary(self) -> str:
         """Return a one-line summary of the circuit.
@@ -1355,5 +1492,289 @@ class QuantumCircuit:
             "",
             f"measure q -> c;",
         ]
+
+        return "\n".join(lines)
+
+    def to_cirq_code(self, var: str = "circuit") -> str:
+        """Export this circuit as runnable Google Cirq Python code.
+
+        Every gate in the circuit log is converted to its Cirq equivalent.
+        The returned string is a complete Python script.
+
+        Args:
+            var: Variable name for the Cirq Circuit in the output code.
+                 Defaults to 'circuit'.
+
+        Returns:
+            String of valid Python code.
+
+        Example:
+            >>> qc = QuantumCircuit(2)
+            >>> qc.h(0).cnot(0, 1)
+            >>> print(qc.to_cirq_code())
+        """
+        import math
+
+        _SIMPLE: Dict[str, str] = {
+            "I": "I", "H": "H", "X": "X", "Y": "Y", "Z": "Z", "S": "S", "T": "T",
+        }
+        _ADJOINT: Dict[str, str] = {"Sdg": "S", "Tdg": "T"}
+
+        def _fmt(val: float) -> str:
+            rounded = round(val, 8)
+            return f"{rounded:.8f}".rstrip("0").rstrip(".")
+
+        def _q(i: int) -> str:
+            return f"q[{i}]"
+
+        def _gate_line(name: str, qubits: List[int], params: Optional[dict]) -> str:
+            p = params or {}
+            q = qubits
+
+            if name in _SIMPLE:
+                return f"{var}.append(cirq.{_SIMPLE[name]}({_q(q[0])}))"
+            if name in _ADJOINT:
+                return f"{var}.append(cirq.{_ADJOINT[name]}({_q(q[0])}) ** -1)"
+            if name == "SX":
+                return f"{var}.append(cirq.X({_q(q[0])}) ** 0.5)"
+            if name == "SXdg":
+                return f"{var}.append(cirq.X({_q(q[0])}) ** -0.5)"
+
+            if name == "Rx":
+                return f"{var}.append(cirq.rx({_fmt(p['theta'])})({_q(q[0])}))"
+            if name == "Ry":
+                return f"{var}.append(cirq.ry({_fmt(p['theta'])})({_q(q[0])}))"
+            if name == "Rz":
+                return f"{var}.append(cirq.rz({_fmt(p['theta'])})({_q(q[0])}))"
+            if name == "P":
+                # qcsim P(lam) = diag(1, e^{i*lam});  Cirq Z**t = diag(1, e^{i*pi*t})
+                t = p["lam"] / math.pi
+                return f"{var}.append(cirq.ZPowGate(exponent={_fmt(t)})({_q(q[0])}))"
+
+            if name in ("CNOT", "CX"):
+                return f"{var}.append(cirq.CNOT({_q(q[0])}, {_q(q[1])}))"
+            if name == "CY":
+                return f"{var}.append(cirq.Y.controlled()({_q(q[0])}, {_q(q[1])}))"
+            if name == "CZ":
+                return f"{var}.append(cirq.CZ({_q(q[0])}, {_q(q[1])}))"
+            if name == "SWAP":
+                return f"{var}.append(cirq.SWAP({_q(q[0])}, {_q(q[1])}))"
+            if name == "CP":
+                t = p["lam"] / math.pi
+                return (
+                    f"{var}.append(cirq.CZPowGate(exponent={_fmt(t)})"
+                    f"({_q(q[0])}, {_q(q[1])}))"
+                )
+
+            if name in ("CCX", "Toffoli"):
+                return f"{var}.append(cirq.TOFFOLI({_q(q[0])}, {_q(q[1])}, {_q(q[2])}))"
+
+            if name == "BARRIER":
+                return "# (Cirq has no explicit barrier — moment ordering is preserved)"
+
+            return f"# Unsupported gate: {name} on qubits {q}"
+
+        n = self.num_qubits
+        lines: List[str] = [
+            "# Generated by qcsim",
+            "# https://github.com/LochanPS/Quantum-Collective-Monthly-Projects",
+            "#",
+            "# Setup (one-time):",
+            "#   pip install cirq",
+            "",
+            "import cirq",
+            "",
+            f"q = cirq.LineQubit.range({n})",
+            f"{var} = cirq.Circuit()",
+            "",
+        ]
+
+        for gate_name, qubits, params in self._log:
+            lines.append(_gate_line(gate_name, qubits, params))
+
+        lines += [
+            "",
+            f"{var}.append(cirq.measure(*q, key='result'))",
+            "",
+            f"print({var})",
+            "",
+            "",
+            "# ================================================================",
+            "# Simulate locally",
+            "# ================================================================",
+            "# simulator = cirq.Simulator()",
+            f"# result = simulator.run({var}, repetitions=1024)",
+            "# print(result.histogram(key='result'))",
+        ]
+
+        return "\n".join(lines)
+
+    def to_qasm3(self) -> str:
+        """Export this circuit as OpenQASM 3.0 source code.
+
+        OpenQASM 3.0 is the successor to OpenQASM 2.0 used by Qiskit 1.0+
+        and newer IBM Quantum tooling. Unlike 2.0, it declares qubits with
+        a `qubit[n]` array (no qreg/creg split) and does not need an
+        `include` header for the basic gate set used here.
+
+        Returns:
+            String of valid OpenQASM 3.0 code.
+
+        Example:
+            >>> qc = QuantumCircuit(2)
+            >>> qc.h(0).cnot(0, 1)
+            >>> print(qc.to_qasm3())
+        """
+        _SIMPLE: Dict[str, str] = {
+            "I": "id", "H": "h", "X": "x", "Y": "y", "Z": "z",
+            "S": "s", "Sdg": "sdg", "T": "t", "Tdg": "tdg",
+            "SX": "sx", "SXdg": "sxdg",
+        }
+
+        def _fmt(val: float) -> str:
+            rounded = round(val, 8)
+            return f"{rounded:.8f}".rstrip("0").rstrip(".")
+
+        def _gate_line(name: str, qubits: List[int], params: Optional[dict]) -> str:
+            p = params or {}
+            q = qubits
+
+            if name in _SIMPLE:
+                return f"{_SIMPLE[name]} q[{q[0]}];"
+            if name == "Rx":
+                return f"rx({_fmt(p['theta'])}) q[{q[0]}];"
+            if name == "Ry":
+                return f"ry({_fmt(p['theta'])}) q[{q[0]}];"
+            if name == "Rz":
+                return f"rz({_fmt(p['theta'])}) q[{q[0]}];"
+            if name == "P":
+                return f"p({_fmt(p['lam'])}) q[{q[0]}];"
+            if name == "U":
+                return (
+                    f"U({_fmt(p['theta'])},{_fmt(p['phi'])},{_fmt(p['lam'])}) "
+                    f"q[{q[0]}];"
+                )
+            if name in ("CNOT", "CX"):
+                return f"cx q[{q[0]}], q[{q[1]}];"
+            if name == "CY":
+                return f"cy q[{q[0]}], q[{q[1]}];"
+            if name == "CZ":
+                return f"cz q[{q[0]}], q[{q[1]}];"
+            if name == "SWAP":
+                return f"swap q[{q[0]}], q[{q[1]}];"
+            if name == "CP":
+                return f"cp({_fmt(p['lam'])}) q[{q[0]}], q[{q[1]}];"
+            if name in ("CCX", "Toffoli"):
+                return f"ccx q[{q[0]}], q[{q[1]}], q[{q[2]}];"
+            if name == "BARRIER":
+                all_q = ", ".join(f"q[{i}]" for i in range(self.num_qubits))
+                return f"barrier {all_q};"
+            return f"// Unsupported gate: {name} on qubits {q}"
+
+        n = self.num_qubits
+        lines: List[str] = [
+            "// Generated by qcsim",
+            "// https://github.com/LochanPS/Quantum-Collective-Monthly-Projects",
+            "//",
+            "// Import into Qiskit 1.0+:",
+            "//   from qiskit.qasm3 import loads",
+            "//   qc = loads(open('circuit.qasm3').read())",
+            "",
+            "OPENQASM 3.0;",
+            "",
+            f"qubit[{n}] q;",
+            f"bit[{n}] c;",
+            "",
+        ]
+
+        for gate_name, qubits, params in self._log:
+            lines.append(_gate_line(gate_name, qubits, params))
+
+        lines += [
+            "",
+            "c = measure q;",
+        ]
+
+        return "\n".join(lines)
+
+    def to_quil(self) -> str:
+        """Export this circuit as Quil assembly (Rigetti's pyQuil format).
+
+        Quil is the native instruction language for Rigetti's quantum
+        computers, runnable locally via pyQuil's QVM (Quantum Virtual
+        Machine) or on real Rigetti hardware.
+
+        Returns:
+            String of valid Quil code.
+
+        Example:
+            >>> qc = QuantumCircuit(2)
+            >>> qc.h(0).cnot(0, 1)
+            >>> print(qc.to_quil())
+        """
+        _SIMPLE: Dict[str, str] = {
+            "I": "I", "H": "H", "X": "X", "Y": "Y", "Z": "Z",
+            "S": "S", "T": "T", "SX": "V",  # Quil's V == sqrt(X)
+        }
+        _ADJOINT: Dict[str, str] = {"Sdg": "S", "Tdg": "T", "SXdg": "V"}
+
+        def _fmt(val: float) -> str:
+            rounded = round(val, 8)
+            return f"{rounded:.8f}".rstrip("0").rstrip(".")
+
+        def _gate_line(name: str, qubits: List[int], params: Optional[dict]) -> str:
+            p = params or {}
+            q = qubits
+
+            if name in _SIMPLE:
+                return f"{_SIMPLE[name]} {q[0]}"
+            if name in _ADJOINT:
+                return f"DAGGER {_ADJOINT[name]} {q[0]}"
+            if name == "Rx":
+                return f"RX({_fmt(p['theta'])}) {q[0]}"
+            if name == "Ry":
+                return f"RY({_fmt(p['theta'])}) {q[0]}"
+            if name == "Rz":
+                return f"RZ({_fmt(p['theta'])}) {q[0]}"
+            if name == "P":
+                return f"PHASE({_fmt(p['lam'])}) {q[0]}"
+            if name in ("CNOT", "CX"):
+                return f"CNOT {q[0]} {q[1]}"
+            if name == "CY":
+                return f"CONTROLLED Y {q[0]} {q[1]}"
+            if name == "CZ":
+                return f"CZ {q[0]} {q[1]}"
+            if name == "SWAP":
+                return f"SWAP {q[0]} {q[1]}"
+            if name == "CP":
+                return f"CPHASE({_fmt(p['lam'])}) {q[0]} {q[1]}"
+            if name in ("CCX", "Toffoli"):
+                return f"CCNOT {q[0]} {q[1]} {q[2]}"
+            if name == "BARRIER":
+                return "# (Quil has no explicit barrier instruction)"
+            return f"# Unsupported gate: {name} on qubits {q}"
+
+        n = self.num_qubits
+        lines: List[str] = [
+            "# Generated by qcsim",
+            "# https://github.com/LochanPS/Quantum-Collective-Monthly-Projects",
+            "#",
+            "# Run locally (one-time setup):",
+            "#   pip install pyquil",
+            "#   docker run -p 5000:5000 rigetti/qvm -S   (Quantum Virtual Machine)",
+            "#",
+            "# from pyquil import Program, get_qc",
+            "# from pyquil.api import local_forest_runtime",
+            "# program = Program(open('circuit.quil').read())",
+            "",
+            f"DECLARE ro BIT[{n}]",
+            "",
+        ]
+
+        for gate_name, qubits, params in self._log:
+            lines.append(_gate_line(gate_name, qubits, params))
+
+        lines.append("")
+        lines += [f"MEASURE {i} ro[{i}]" for i in range(n)]
 
         return "\n".join(lines)

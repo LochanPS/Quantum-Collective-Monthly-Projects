@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from qcsim import QuantumCircuit
-from qcsim.exceptions import QubitIndexError
+from qcsim.exceptions import GateError, QubitIndexError
 
 
 # ================================================================== #
@@ -391,6 +391,36 @@ class TestMeasurement:
         counts = qc.measure_all(shots=100)
         assert counts == {"1": 100}
 
+    def test_partial_measure_deterministic_qubit(self):
+        qc = QuantumCircuit(1)
+        qc.x(0)  # deterministic |1⟩
+        assert qc.measure(0) == 1
+
+    def test_partial_measure_collapses_state(self):
+        qc = QuantumCircuit(1)
+        qc.x(0)
+        qc.measure(0)
+        assert np.allclose(qc.statevector(), [0, 1])
+
+    def test_partial_measure_bell_state_correlated(self):
+        for _ in range(30):
+            qc = QuantumCircuit(2)
+            qc.h(0).cnot(0, 1)
+            b0 = qc.measure(0)
+            b1 = qc.measure(1)
+            assert b0 == b1
+
+    def test_partial_measure_does_not_disturb_other_qubit(self):
+        qc = QuantumCircuit(2)
+        qc.x(1)  # q1 deterministic |1>, q0 stays |0>
+        qc.measure(0)
+        assert np.isclose(qc.probabilities().get("10", 0), 1.0)
+
+    def test_partial_measure_invalid_qubit_raises(self):
+        qc = QuantumCircuit(2)
+        with pytest.raises(QubitIndexError):
+            qc.measure(5)
+
 
 # ================================================================== #
 #  Circuit operations
@@ -404,6 +434,28 @@ class TestCircuitOps:
         assert abs(qc.probabilities().get("00", 0) - 1.0) < 1e-10
         assert len(qc._log) == 0
 
+    def test_reset_single_qubit(self):
+        qc = QuantumCircuit(1)
+        qc.x(0)
+        qc.reset(0)
+        assert np.allclose(qc.statevector(), [1, 0])
+
+    def test_reset_single_qubit_already_zero(self):
+        qc = QuantumCircuit(1)
+        qc.reset(0)
+        assert np.allclose(qc.statevector(), [1, 0])
+
+    def test_reset_single_qubit_leaves_others_untouched(self):
+        qc = QuantumCircuit(2)
+        qc.x(0).x(1)
+        qc.reset(0)
+        assert np.isclose(qc.probabilities().get("10", 0), 1.0)
+
+    def test_reset_single_qubit_invalid_index_raises(self):
+        qc = QuantumCircuit(2)
+        with pytest.raises(QubitIndexError):
+            qc.reset(5)
+
     def test_compose(self):
         """Composing two half-circuits equals the full circuit."""
         qc_full = QuantumCircuit(2)
@@ -416,6 +468,91 @@ class TestCircuitOps:
         qc_a.compose(qc_b)
 
         assert np.allclose(qc_full.statevector(), qc_a.statevector())
+
+    def test_equality_same_gates(self):
+        qc1 = QuantumCircuit(2)
+        qc1.h(0).cnot(0, 1)
+        qc2 = QuantumCircuit(2)
+        qc2.h(0).cnot(0, 1)
+        assert qc1 == qc2
+
+    def test_equality_different_gates(self):
+        qc1 = QuantumCircuit(2)
+        qc1.h(0).cnot(0, 1)
+        qc2 = QuantumCircuit(2)
+        qc2.x(0).cnot(0, 1)
+        assert qc1 != qc2
+
+    def test_equality_different_qubit_count(self):
+        qc1 = QuantumCircuit(2)
+        qc2 = QuantumCircuit(3)
+        assert qc1 != qc2
+
+    def test_equality_different_gate_order(self):
+        qc1 = QuantumCircuit(2)
+        qc1.h(0).x(1)
+        qc2 = QuantumCircuit(2)
+        qc2.x(1).h(0)
+        assert qc1 != qc2
+
+    def test_equality_tolerant_of_float_drift(self):
+        qc1 = QuantumCircuit(1)
+        qc1.rx(0, 1.5707963267948966)
+        qc2 = QuantumCircuit(1)
+        qc2.rx(0, 1.57079632679)
+        assert qc1 == qc2
+
+    def test_equality_against_non_circuit(self):
+        qc = QuantumCircuit(1)
+        assert qc != "not a circuit"
+        assert (qc == 5) is False
+
+    def test_equality_empty_circuits(self):
+        qc1 = QuantumCircuit(3)
+        qc2 = QuantumCircuit(3)
+        assert qc1 == qc2
+
+    def test_inverse_bell_state_returns_to_zero(self):
+        qc = QuantumCircuit(2)
+        qc.h(0).cnot(0, 1)
+        combo = QuantumCircuit(2)
+        combo.compose(qc).compose(qc.inverse())
+        assert np.allclose(combo.statevector(), [1, 0, 0, 0])
+
+    def test_inverse_parametric_gate(self):
+        qc = QuantumCircuit(1)
+        qc.rx(0, 0.7)
+        combo = QuantumCircuit(1)
+        combo.compose(qc).compose(qc.inverse())
+        assert np.allclose(combo.statevector(), [1, 0])
+
+    def test_inverse_adjoint_pair_gates(self):
+        qc = QuantumCircuit(1)
+        qc.h(0).s(0).t(0).sx(0)
+        combo = QuantumCircuit(1)
+        combo.compose(qc).compose(qc.inverse())
+        assert np.allclose(combo.statevector(), [1, 0])
+
+    def test_inverse_does_not_modify_original(self):
+        qc = QuantumCircuit(1)
+        qc.h(0)
+        sv_before = qc.statevector().copy()
+        qc.inverse()
+        assert np.allclose(qc.statevector(), sv_before)
+
+    def test_inverse_raises_on_measure(self):
+        qc = QuantumCircuit(1)
+        qc.h(0)
+        qc.measure(0)
+        with pytest.raises(GateError):
+            qc.inverse()
+
+    def test_inverse_raises_on_reset(self):
+        qc = QuantumCircuit(1)
+        qc.x(0)
+        qc.reset(0)
+        with pytest.raises(GateError):
+            qc.inverse()
 
 
 # ================================================================== #
@@ -657,3 +794,192 @@ class TestQASM2Export:
         qasm = qc.to_qasm2()
         assert isinstance(qasm, str)
         assert len(qasm) > 0
+
+
+# ================================================================== #
+#  Cirq export
+# ================================================================== #
+
+class TestCirqExport:
+    def test_export_returns_string(self):
+        qc = QuantumCircuit(2)
+        qc.h(0).cnot(0, 1)
+        code = qc.to_cirq_code()
+        assert isinstance(code, str)
+
+    def test_export_is_valid_python(self):
+        import ast
+        qc = QuantumCircuit(3)
+        qc.h(0).cnot(0, 1).cy(1, 2).cp(0, 2, 1.2).rx(2, 0.5).s(0).t(1).sxdg(2)
+        code = qc.to_cirq_code()
+        ast.parse(code)  # raises SyntaxError if invalid
+
+    def test_export_contains_cirq_import(self):
+        qc = QuantumCircuit(1)
+        qc.h(0)
+        code = qc.to_cirq_code()
+        assert "import cirq" in code
+
+    def test_export_qubit_count(self):
+        qc = QuantumCircuit(4)
+        code = qc.to_cirq_code()
+        assert "cirq.LineQubit.range(4)" in code
+
+    def test_export_single_qubit_gates(self):
+        qc = QuantumCircuit(1)
+        qc.h(0).x(0).y(0).z(0).s(0).t(0)
+        code = qc.to_cirq_code()
+        assert "cirq.H(q[0])" in code
+        assert "cirq.X(q[0])" in code
+        assert "cirq.Y(q[0])" in code
+        assert "cirq.Z(q[0])" in code
+        assert "cirq.S(q[0])" in code
+        assert "cirq.T(q[0])" in code
+
+    def test_export_cnot_and_swap(self):
+        qc = QuantumCircuit(2)
+        qc.cnot(0, 1).swap(0, 1)
+        code = qc.to_cirq_code()
+        assert "cirq.CNOT(q[0], q[1])" in code
+        assert "cirq.SWAP(q[0], q[1])" in code
+
+    def test_export_cy(self):
+        qc = QuantumCircuit(2)
+        qc.cy(0, 1)
+        code = qc.to_cirq_code()
+        assert "cirq.Y.controlled()(q[0], q[1])" in code
+
+    def test_export_cp_phase_gate(self):
+        import math
+        qc = QuantumCircuit(2)
+        qc.cp(0, 1, math.pi)
+        code = qc.to_cirq_code()
+        assert "cirq.CZPowGate(exponent=1)" in code
+
+    def test_export_rotation_gates(self):
+        qc = QuantumCircuit(1)
+        qc.rx(0, 0.5)
+        code = qc.to_cirq_code()
+        assert "cirq.rx(0.5)(q[0])" in code
+
+
+# ================================================================== #
+#  OpenQASM 3.0 export
+# ================================================================== #
+
+class TestQASM3Export:
+    def test_export_returns_string(self):
+        qc = QuantumCircuit(2)
+        qc.h(0).cnot(0, 1)
+        qasm = qc.to_qasm3()
+        assert isinstance(qasm, str)
+        assert len(qasm) > 0
+
+    def test_export_header(self):
+        qc = QuantumCircuit(2)
+        qasm = qc.to_qasm3()
+        assert "OPENQASM 3.0;" in qasm
+
+    def test_export_qubit_declaration(self):
+        qc = QuantumCircuit(3)
+        qasm = qc.to_qasm3()
+        assert "qubit[3] q;" in qasm
+        assert "bit[3] c;" in qasm
+
+    def test_export_no_qelib_include(self):
+        """QASM 3.0 doesn't need the qelib1.inc header that QASM 2.0 requires."""
+        qc = QuantumCircuit(1)
+        qc.h(0)
+        qasm = qc.to_qasm3()
+        assert "qelib1.inc" not in qasm
+
+    def test_export_single_qubit_gates(self):
+        qc = QuantumCircuit(1)
+        qc.h(0).x(0).sxdg(0)
+        qasm = qc.to_qasm3()
+        assert "h q[0];" in qasm
+        assert "x q[0];" in qasm
+        assert "sxdg q[0];" in qasm
+
+    def test_export_two_qubit_gates(self):
+        qc = QuantumCircuit(2)
+        qc.cnot(0, 1).cy(0, 1).swap(0, 1)
+        qasm = qc.to_qasm3()
+        assert "cx q[0], q[1];" in qasm
+        assert "cy q[0], q[1];" in qasm
+        assert "swap q[0], q[1];" in qasm
+
+    def test_export_measure_statement(self):
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        qasm = qc.to_qasm3()
+        assert "c = measure q;" in qasm
+
+    def test_export_toffoli(self):
+        qc = QuantumCircuit(3)
+        qc.toffoli(0, 1, 2)
+        qasm = qc.to_qasm3()
+        assert "ccx q[0], q[1], q[2];" in qasm
+
+
+# ================================================================== #
+#  Quil (Rigetti) export
+# ================================================================== #
+
+class TestQuilExport:
+    def test_export_returns_string(self):
+        qc = QuantumCircuit(2)
+        qc.h(0).cnot(0, 1)
+        quil = qc.to_quil()
+        assert isinstance(quil, str)
+        assert len(quil) > 0
+
+    def test_export_declare_classical_register(self):
+        qc = QuantumCircuit(3)
+        quil = qc.to_quil()
+        assert "DECLARE ro BIT[3]" in quil
+
+    def test_export_single_qubit_gates(self):
+        qc = QuantumCircuit(1)
+        qc.h(0).x(0).y(0).z(0).s(0).t(0)
+        quil = qc.to_quil()
+        assert "H 0" in quil
+        assert "X 0" in quil
+        assert "Y 0" in quil
+        assert "Z 0" in quil
+        assert "S 0" in quil
+        assert "T 0" in quil
+
+    def test_export_cnot_and_swap(self):
+        qc = QuantumCircuit(2)
+        qc.cnot(0, 1).swap(0, 1)
+        quil = qc.to_quil()
+        assert "CNOT 0 1" in quil
+        assert "SWAP 0 1" in quil
+
+    def test_export_cz_and_cphase(self):
+        import math
+        qc = QuantumCircuit(2)
+        qc.cz(0, 1).cp(0, 1, math.pi / 2)
+        quil = qc.to_quil()
+        assert "CZ 0 1" in quil
+        assert "CPHASE(1.57079633) 0 1" in quil
+
+    def test_export_rotation_gates(self):
+        qc = QuantumCircuit(1)
+        qc.rx(0, 0.5)
+        quil = qc.to_quil()
+        assert "RX(0.5) 0" in quil
+
+    def test_export_measure_statements(self):
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        quil = qc.to_quil()
+        assert "MEASURE 0 ro[0]" in quil
+        assert "MEASURE 1 ro[1]" in quil
+
+    def test_export_toffoli(self):
+        qc = QuantumCircuit(3)
+        qc.toffoli(0, 1, 2)
+        quil = qc.to_quil()
+        assert "CCNOT 0 1 2" in quil

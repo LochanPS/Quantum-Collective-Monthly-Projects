@@ -94,3 +94,33 @@ class QuantumState:
         """Reset all qubits to |0⟩."""
         self._vec[:] = 0.0
         self._vec[0] = 1.0 + 0j
+
+    def prob_one(self, qubit: int) -> float:
+        """Marginal probability that a single qubit reads 1.
+
+        Args:
+            qubit: Qubit index (LSB convention).
+
+        Returns:
+            Sum of |amplitude|² over every basis state with that qubit's bit set.
+        """
+        indices = np.arange(self.dim)
+        mask = ((indices >> qubit) & 1) == 1
+        return float(np.sum(np.abs(self._vec[mask]) ** 2))
+
+    def collapse(self, qubit: int, outcome: int) -> None:
+        """Project the state onto a fixed outcome for one qubit and renormalise.
+
+        Args:
+            qubit: Qubit index (LSB convention).
+            outcome: 0 or 1 — the bit value to collapse onto.
+
+        Raises:
+            ZeroDivisionError: If the outcome has zero probability (should not
+                happen if `outcome` was sampled from `prob_one`).
+        """
+        indices = np.arange(self.dim)
+        keep = ((indices >> qubit) & 1) == outcome
+        self._vec[~keep] = 0.0
+        norm = np.sqrt(np.sum(np.abs(self._vec) ** 2))
+        self._vec /= norm
