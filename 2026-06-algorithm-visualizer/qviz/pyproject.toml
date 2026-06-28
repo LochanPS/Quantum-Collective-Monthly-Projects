@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qviz"
+version = "0.1.0"
+description = "Step-through quantum algorithm visualizer — Quantum Collective Monthly Project #2"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "Apache-2.0"}
+authors = [{name = "Quantum Collective"}]
+keywords = ["quantum", "visualizer", "algorithms", "qcsim"]
+# qcsim is not on PyPI yet -- install it first from the sibling folder:
+#   pip install -e ../../2026-05-circuit-simulator/qcsim
+# then install this package. See README for the full setup.
+dependencies = ["numpy>=1.24"]
+
+[project.urls]
+Homepage = "https://github.com/LochanPS/Quantum-Collective-Monthly-Projects"
+Repository = "https://github.com/LochanPS/Quantum-Collective-Monthly-Projects"
+Documentation = "https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/tree/main/2026-06-algorithm-visualizer/qviz"
+"Bug Tracker" = "https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/issues"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-cov"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[project.scripts]
+qviz-step = "qviz.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["qviz*"]
