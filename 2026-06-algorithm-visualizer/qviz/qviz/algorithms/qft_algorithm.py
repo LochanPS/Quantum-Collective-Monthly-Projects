@@ -1,14 +1,14 @@
 """Quantum Fourier Transform, wrapping qcsim's existing qft() builder.
 
-Annotations here are intentionally generic -- qcsim.qft.qft() doesn't tag
-which gate is "rotating qubit i relative to qubit j" vs "the final swap",
-so step-by-step it just says "QFT gate". Writing precise per-gate
-annotations for this one is a good Beginner-tier contribution (see the
-challenge README) -- the gate sequence itself is already correct and
-tested in qcsim.
+Builds a QFT circuit together with descriptive per-gate annotations for
+the algorithm visualizer. The underlying gate sequence comes directly
+from qcsim.qft.qft(), ensuring the visualizer stays consistent with the
+reference implementation.
 """
 
 from __future__ import annotations
+
+import math
 
 from typing import List, Optional, Tuple
 
@@ -19,7 +19,7 @@ from qcsim.qft import qft
 def qft_algorithm(
     num_qubits: int = 3, initial_state: Optional[str] = None
 ) -> Tuple[QuantumCircuit, List[str]]:
-    """Build a QFT circuit and its (generic) step annotations.
+    """Build a QFT circuit and its step annotations.
 
     Args:
         num_qubits: Number of qubits to transform.
@@ -37,12 +37,36 @@ def qft_algorithm(
         for q, bit in enumerate(initial_state):
             if bit == "1":
                 qc.x(q)
-                annotations.append(f"Prepare input: flip q{q} to |1> (part of |{initial_state}>)")
+                annotations.append(
+                    f"Prepare input: flip q{q} to |1> (part of |{initial_state}>)"
+                )
 
     before = len(qc._log)
     qft(qc, list(range(num_qubits)))
-    added = len(qc._log) - before
-    for _ in range(added):
-        annotations.append("QFT step (Hadamard or controlled-phase rotation -- see qcsim.qft source)")
+
+    for gate, qubits, params in qc._log[before:]:
+        if gate == "H":
+            annotations.append(
+                f"Apply a Hadamard gate to q{qubits[0]} to create an equal superposition."
+            )
+
+        elif gate == "CP":
+            control, target = qubits
+            angle = params["lam"]
+            denominator = round(math.pi / angle)
+
+            annotations.append(
+                f"Apply a controlled phase rotation (π/{denominator}) from q{control} "
+                f"to q{target}, encoding the relative phase needed for the Fourier transform."
+            )
+
+        elif gate == "SWAP":
+            q1, q2 = qubits
+            annotations.append(
+                f"Swap q{q1} and q{q2} to restore the standard QFT output ordering."
+            )
+
+        else:
+            annotations.append("QFT gate")
 
     return qc, annotations
