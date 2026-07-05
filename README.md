@@ -1,6 +1,6 @@
 # Quantum Collective — Monthly Projects
 
-Monthly collaborative coding challenges from **Quantum Collective** — a 600+ member quantum computing community based in Bangalore, India.
+Monthly collaborative coding challenges from **Quantum Collective** — a 600+ member quantum computing community based in India.
 
 Build real quantum tools. Learn by shipping.
 
