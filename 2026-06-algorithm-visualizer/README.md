@@ -215,7 +215,7 @@ stepper.py
 qcsim
 ```
 
-This architecture allows new algorithms, renderers, educational features, and future interfaces without changing the simulation engine.
+This architecture cleanly separates the simulation engine, algorithm layer, interpretation layer, rendering layer, and CLI, making it straightforward to extend qviz with new algorithms, educational features, and terminal rendering improvements.
 
 ---
 
