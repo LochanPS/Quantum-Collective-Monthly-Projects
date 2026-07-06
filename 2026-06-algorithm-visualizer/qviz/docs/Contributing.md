@@ -77,14 +77,11 @@ AlgorithmResult with Oracle/Interference phases; oracle uses CNOT
 fan-out keyed on the secret string. Non-palindromic secret tested.
 ```
 
-## Scope guardrails
+Scope guardrails
 
-- **Terminal-only.** No matplotlib, web views, or GUI. Graphical
-  visualization is a separate product; see
-  [Developer-Guide.md](Developer-Guide.md#critical-design-constraint-terminal-only).
-- **Keep layers clean.** Interpretation logic → `interpret.py`;
-  formatting → `render.py`; algorithm meaning → `algorithms/`. See
-  [Architecture.md](Architecture.md).
+Keep qviz focused on its terminal-first design. Do not add graphical interfaces, browser-based views, or GUI frameworks such as matplotlib. New visualization features should extend the existing terminal renderer while preserving ASCII compatibility.
+
+Keep layers clean. Interpretation logic → interpret.py; formatting → render.py; algorithm meaning → algorithms/. See Architecture.md.
 
 ## Submitting
 
