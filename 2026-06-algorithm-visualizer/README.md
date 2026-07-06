@@ -1,91 +1,291 @@
-# July 2026 — Quantum Algorithm Visualizer
+# qviz — Quantum Algorithm Visualizer
 
-**Status:** In preparation — full reveal July 1, 2026
-**Submit here:** [Discussions → Submissions](https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/discussions/categories/submissions)
+**Quantum Collective Monthly Project #2**  
+Built on top of **qcsim** (Monthly Project #1)  
+Terminal-first, open-source quantum algorithm learning tool.
 
 ---
 
-## What is this?
+## Why qviz Exists
 
-A **step-through visualizer for quantum algorithms** — watch a circuit execute one gate at a time and see exactly how the state vector evolves at each step, instead of only seeing the final answer.
+Most quantum simulators show only the final result.
 
-Running `qc.h(0).cnot(0,1)` tells you the Bell state exists. It doesn't show you *how it got there* — which gate created the superposition, which gate created the entanglement, what the amplitudes looked like in between. That's the gap this project fills: take any circuit built with [qcsim](../2026-05-circuit-simulator/qcsim/), replay it gate-by-gate, and render the state at every step.
+For example:
 
-This is the natural sequel to May's circuit simulator — it builds directly on top of `qcsim` rather than starting from scratch.
-
+```python
+qc.h(0)
+qc.cnot(0, 1)
 ```
+
+produces a Bell state:
+
+```text
+(|00⟩ + |11⟩) / √2
+```
+
+But it doesn't show:
+
+- Which gate created the superposition
+- Which gate created the entanglement
+- How the amplitudes evolved
+- Why the algorithm works
+
+qviz fills that gap.
+
+Instead of showing only the final state, qviz replays a quantum circuit gate-by-gate and visualizes the state evolution at every step.
+
+```text
 Step 0: |00⟩
-Step 1: H(q0)     -> (|00⟩ + |10⟩) / √2
-Step 2: CNOT(0,1) -> (|00⟩ + |11⟩) / √2     <- entangled
+
+Step 1:
+H(q0)
+
+(|00⟩ + |10⟩)/√2
+
+Step 2:
+CNOT(q0,q1)
+
+(|00⟩ + |11⟩)/√2
+↑ Bell state created
 ```
 
 ---
 
-## What's Already Built
+## What qviz Provides
 
-Nothing yet — this README is the problem statement, written ahead of the July 1 reveal so early contributors can start thinking about it.
+qviz is a terminal-based visualizer that can step through any circuit built using qcsim.
 
-What *will* exist by reveal day: a minimal reference stepper (depends on `qcsim` as a library) that can replay any circuit's gate log and snapshot the state after each step, plus terminal-only rendering (statevector bars, probability histogram, circuit diagram with the current step highlighted) — the same ASCII style as `qcsim`'s existing `draw_statevector`/`draw_histogram`.
+Features include:
 
-**Reference algorithms at launch:** Quantum Fourier Transform, Grover's search, Deutsch-Jozsa, Bernstein-Vazirani. Quantum teleportation and a basic VQE step are planned as follow-up additions, not launch-day requirements.
-
-**Free vs. extended:** the terminal stepper is the free, open-source core. A graphical version (real-time animated charts, Bloch sphere per step) lives in a separate paid product built on the same engine — if you're contributing here, you're contributing to the open core, not blocked by or required to build the graphical layer.
-
----
-
-## What You Can Build
-
-### Start Here — Core Features
-
-- **New algorithm modules** — any circuit with clear conceptual steps (e.g. quantum walk, simple amplitude estimation) plugs into the stepper the same way the core four do
-- **Step annotations** — human-readable labels per step ("Oracle marks |11⟩", "Diffusion amplifies marked state") so the visualizer teaches *why*, not just *what*
-- **Export a step-by-step trace** — JSON or text log of every step's state, for use in writeups/teaching material
-
-### Go Deeper — Extend the Stepper
-
-- **Diffing between steps** — highlight which amplitudes changed and by how much
-- **Multi-qubit subsystem views** — for algorithms where only a subset of qubits matters at a given step (e.g. ancilla qubits in Deutsch-Jozsa)
-- **Comparison mode** — run two algorithms side by side (e.g. Grover with 1 vs 2 iterations)
-
-### Advanced — Push the Limits
-
-- **Algorithm correctness checker** — verify a stepped-through algorithm actually reaches the expected final state, useful as a contributor-facing test harness
-- **Generalize to N-qubit oracles** — Grover/Deutsch-Jozsa currently assume small fixed qubit counts; generalize the oracle interface
+- Gate-by-gate circuit replay
+- State-vector evolution
+- Probability visualizations
+- Circuit rendering
+- Measurement stage
+- Execution summaries
+- Algorithm-aware explanations
+- Beginner and Advanced viewing modes
 
 ---
 
-## Minimum Requirements (for your own implementation)
+## Beginner vs Advanced Modes
 
-If you're building your own stepper rather than extending the reference:
+### Beginner Mode
 
-1. Given a circuit's gate sequence, produce the state vector after **every individual gate**, not just the final state
-2. Render at least one of: amplitude bars, probability histogram, or circuit diagram with current-step highlighting
-3. Correctly step through at least one of the core four algorithms end to end
-4. Tests confirming the final step matches the circuit's actual final state (no drift from the step-by-step replay)
+Designed for learning.
+
+Shows:
+
+- Probabilities
+- Plain-English explanations
+- Algorithm progress
+- Measurement outcomes
+- High-level intuition
+
+Hides:
+
+- Complex amplitudes
+- Phase details
+- Unnecessary mathematical notation
+
+### Advanced Mode
+
+Designed for deeper quantum understanding.
+
+Shows:
+
+- Full state vectors
+- Complex amplitudes
+- Phase information
+- State changes
+- Detailed algorithm internals
+
+Includes:
+
+- Windowed circuit rendering
+- Phase-aware visualizations
+- Register information
 
 ---
 
-## How to Contribute
+## Algorithms Included
 
-The reference implementation lives in [`qviz/`](qviz/), with full docs in
-[`qviz/docs/`](qviz/docs/README.md).
+| Algorithm | Description |
+|------------|-------------|
+| Deutsch–Jozsa | Distinguish constant vs balanced oracles |
+| Bernstein–Vazirani | Recover a hidden bitstring |
+| Grover Search | Find a marked state using amplitude amplification |
+| Quantum Fourier Transform | Visualize Hadamards, phase rotations, and swaps |
 
-**Add an algorithm module:** follow the [Algorithm Development guide](qviz/docs/Algorithm-Development.md) — build a circuit, return an `AlgorithmResult`.
+---
 
-**Find something to build:** the [Roadmap](qviz/docs/Roadmap.md) lists Beginner → Expert ideas across algorithms, visualization, tooling, and docs.
+## Documentation
 
-**Contribution workflow:** see [Contributing](qviz/docs/Contributing.md).
+Full documentation lives in `docs/`.
 
-**Submit your own visualizer:** fork, build, post in [GitHub Discussions → Submissions](https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/discussions/categories/submissions)
+Start here:
+
+| Topic | Document |
+|---------|---------|
+| Documentation Index | docs/README.md |
+| Architecture | docs/Architecture.md |
+| Developer Guide | docs/Developer-Guide.md |
+| Algorithm Development | docs/Algorithm-Development.md |
+| Rendering/UI Guide | docs/Rendering-Guide.md |
+| API Reference | docs/API-Reference.md |
+| Roadmap | docs/Roadmap.md |
+| Contributing | docs/Contributing.md |
+| FAQ | docs/FAQ.md |
+
+---
+
+## Installation
+
+### Fresh Clone
+
+```bash
+git clone https://github.com/LochanPS/Quantum-Collective-Monthly-Projects.git
+
+cd Quantum-Collective-Monthly-Projects/2026-06-algorithm-visualizer/qviz
+
+pip install -e ../../2026-05-circuit-simulator/qcsim
+pip install -e .
+
+qviz-step
+```
+
+### Updating an Existing Checkout
+
+```bash
+cd Quantum-Collective-Monthly-Projects
+
+git pull origin main
+
+cd 2026-06-algorithm-visualizer/qviz
+
+pip install -e ../../2026-05-circuit-simulator/qcsim
+pip install -e .
+
+qviz-step
+```
+
+If `qviz-step` is missing after an update:
+
+```bash
+pip install -e .
+```
+
+to refresh the command-line entry point.
+
+---
+
+## Python API
+
+```python
+from qcsim import QuantumCircuit
+from qviz import step_through, render_step
+
+qc = QuantumCircuit(2)
+qc.h(0).cnot(0, 1)
+
+steps = step_through(qc)
+
+for i, step in enumerate(steps):
+    prev = steps[i - 1] if i else None
+    print(render_step(qc, step, prev=prev))
+```
+
+---
+
+## Architecture
+
+qviz is intentionally modular:
+
+```text
+cli.py
+  ↓
+render.py
+  ↓
+interpret.py / phases.py
+  ↓
+algorithms/
+  ↓
+stepper.py
+  ↓
+qcsim
+```
+
+This architecture allows new algorithms, renderers, educational features, and future interfaces without changing the simulation engine.
+
+---
+
+## Testing
+
+Run:
+
+```bash
+pytest tests/ -v
+```
+
+Tests cover:
+
+- Stepper correctness
+- Rendering
+- Measurement logic
+- State interpretation
+- Phase tracking
+- Algorithm correctness
+- Label orientation edge cases
+
+---
+
+## Contributing
+
+There are contribution opportunities ranging from Beginner to Expert.
+
+### Beginner
+
+- Documentation improvements
+- Better explanations
+- Algorithm annotations
+- Tutorials
+- UI polish
+
+### Intermediate
+
+- New quantum algorithms
+- Additional visualization modes
+- Export functionality
+- State comparison tools
+
+### Advanced
+
+- Generalized Grover oracles
+- Algorithm verification tools
+- Performance optimizations
+- New rendering systems
+
+See:
+
+- `docs/Roadmap.md`
+- `docs/Contributing.md`
+- `docs/Algorithm-Development.md`
+
+---
+
+## Project Origins
+
+qviz began as the July 2026 Quantum Collective challenge:
+
+> Build a tool that shows how a quantum algorithm evolves, not just where it ends.
+
+The project has since grown into a complete educational visualizer for learning and exploring quantum algorithms while remaining fully terminal-based and open source.
 
 ---
 
 ## Learning Resources
 
-- **[qcsim source code](../2026-05-circuit-simulator/qcsim/qcsim/)** — the simulator this builds on
-- [Qiskit Textbook — Grover's Algorithm](https://qiskit.org/learn/) — the canonical walkthrough
-- [Quantum Algorithm Zoo](https://quantumalgorithmzoo.org/) — catalogue of known quantum algorithms, good source for "Go Deeper" ideas
-
----
-
-Want to suggest what this should cover? Open a [feature request](https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/issues/new?template=feature_request.md) tagged `future-challenge`.
+- qcsim source code
+- Qiskit Textbook
+- Quantum Algorithm Zoo
+- Project documentation in `docs/`
