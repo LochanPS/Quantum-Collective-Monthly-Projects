@@ -62,11 +62,9 @@ Interpretation (what a state means) → `interpret.py`. Terminal formatting
 → `render.py`. Algorithm meaning → `algorithms/`. Menu/keys → `cli.py`.
 See [Architecture.md](Architecture.md).
 
-**Can I add a matplotlib chart / web view?**
-No — qviz is terminal-only by design. Graphical visualization is a
-separate product. See
-[Developer-Guide.md](Developer-Guide.md#critical-design-constraint-terminal-only).
+Can I add a matplotlib chart, desktop UI, or web view?
 
+No. qviz is intentionally terminal-only. New visualization features should extend the terminal renderer while preserving ASCII compatibility. See Developer-Guide.md.
 ## Still stuck?
 
 Open a [GitHub issue](https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/issues)
