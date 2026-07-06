@@ -14,6 +14,22 @@ Two genuinely different modes:
 
 Ancilla and input registers are visually split in the state labels (`ancilla|input`); zero-probability states can be hidden (auto-on for larger systems).
 
+## Documentation
+
+Full docs live in **[docs/](docs/)** — start at the
+**[documentation index](docs/README.md)**.
+
+| Topic | Doc |
+|---|---|
+| How it fits together | [Architecture](docs/Architecture.md) |
+| Contribute without getting stuck | [Developer Guide](docs/Developer-Guide.md) |
+| Add a new algorithm | [Algorithm Development](docs/Algorithm-Development.md) |
+| Change the terminal UI | [Rendering Guide](docs/Rendering-Guide.md) |
+| Function/class signatures | [API Reference](docs/API-Reference.md) |
+| Find something to build | [Roadmap](docs/Roadmap.md) |
+| Workflow, formatting, tests | [Contributing](docs/Contributing.md) |
+| Common pitfalls | [FAQ](docs/FAQ.md) |
+
 ## Setup
 
 ### First time (fresh clone)
@@ -62,16 +78,15 @@ qviz-step
 | Grover's search | `qviz.algorithms.grover` | v1 supports 2-qubit marked states only — generalizing to N qubits needs a multi-controlled-Z oracle, a good Advanced-tier contribution. Includes an amplitude-amplification-across-steps view |
 | Quantum Fourier Transform | `qviz.algorithms.qft_algorithm` | wraps qcsim's `qft()`; annotates each Hadamard / controlled-phase (with angle) / swap. Naming which frequency each phase encodes is a good Beginner-tier contribution |
 
-Each returns an `AlgorithmResult` (`circuit`, `annotations`, `phases`, `title`, `info`, `registers`, `summarize`, `outcome`) — see `qviz/algorithms/base.py`.
+Each returns an `AlgorithmResult` (`circuit`, `annotations`, `phases`, `title`, `info`, `registers`, `summarize`, `outcome`) — see [Algorithm Development](docs/Algorithm-Development.md).
 
-## Architecture
+## Architecture (overview)
 
-- `stepper.py` — replays a circuit's gate log on a fresh state, snapshotting after every gate
-- `interpret.py` — plain-English state reading, phase labels, ranked non-zero states
-- `phases.py` — groups per-step phase labels into segments (for the progress bar + windowed circuit)
-- `render.py` — terminal rendering: amplitude/probability bars, phase column, change highlighting, phase progress bar, windowed circuit, measurement stage, execution summary, beginner/advanced layouts
-- `algorithms/` — each module returns an `AlgorithmResult` (circuit + per-gate annotations + per-gate phase + info panel + registers + final summary + structured outcome)
-- `cli.py` — interactive stepper: step/back/jump/autoplay, mode + hide-zeros toggles, loops back to the menu when done
+Four layers, each depending only on the ones below: `stepper.py` (replay
+→ `Step`s) → `algorithms/` (build circuits, return `AlgorithmResult`) →
+`interpret.py` + `phases.py` (meaning) → `render.py` (terminal output) →
+`cli.py` (interactive UI). Full detail in
+[docs/Architecture.md](docs/Architecture.md).
 
 ## Python API
 
@@ -94,6 +109,14 @@ for i, step in enumerate(steps):
 pytest tests/ -v
 ```
 
-54 passing tests: stepper correctness (final step matches circuit's actual final state, barriers produce no step, original circuit untouched), rendering + beginner/advanced modes, state interpretation, phase/register/outcome structure, measurement sampling + execution summary, and per-algorithm correctness + summaries (including non-palindromic bitstring cases, which catch label-orientation bugs that symmetric test inputs like "11" or "101" would silently hide).
+54 passing tests: stepper correctness, rendering + beginner/advanced modes, state interpretation, phase/register/outcome structure, measurement sampling + execution summary, and per-algorithm correctness (including non-palindromic bitstring cases that catch label-orientation bugs). See [Contributing](docs/Contributing.md) and [FAQ](docs/FAQ.md).
 
-See the [challenge README](../README.md) for contribution tiers (Beginner through Expert) and what the paid Lab Suite extends this with.
+## Contributing
+
+Pick something from the **[Roadmap](docs/Roadmap.md)** (Beginner →
+Expert), then follow the **[Contributing guide](docs/Contributing.md)**.
+New algorithm? → [Algorithm Development](docs/Algorithm-Development.md).
+UI feature? → [Rendering Guide](docs/Rendering-Guide.md).
+
+See the [challenge README](../README.md) for the challenge framing and
+contribution tiers.

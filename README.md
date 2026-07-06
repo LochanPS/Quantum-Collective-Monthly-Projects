@@ -89,20 +89,34 @@ pip install -e ../../2026-05-circuit-simulator/qcsim   # install qcsim first
 pip install -e . && qviz-step
 ```
 
+**Already have the repo (or an older qcsim)?** Pull and refresh both
+editable installs:
+```bash
+cd Quantum-Collective-Monthly-Projects && git pull origin main
+cd 2026-06-algorithm-visualizer/qviz
+pip install -e ../../2026-05-circuit-simulator/qcsim   # refresh qcsim
+pip install -e .                                        # refresh qviz
+```
+> `git pull` alone picks up source edits (both packages install with `-e`);
+> re-run the installs if entry points or dependencies changed. If
+> `qviz-step` isn't found afterward, re-run `pip install -e .`.
+
 **What's inside:**
 | Feature | Description |
 |---------|-------------|
 | ⏯️ Step-through engine | Replay any circuit gate-by-gate, snapshot state at every step |
-| 🧮 Core four algorithms | QFT, Grover, Deutsch-Jozsa, Bernstein-Vazirani — with per-gate annotations |
-| 📊 Terminal rendering | Statevector bars + progressive circuit diagram (current step highlighted) |
-| ⌨️ Interactive CLI | Step forward/back/jump through any algorithm live |
+| 🧮 Core four algorithms | QFT, Grover, Deutsch-Jozsa, Bernstein-Vazirani — purpose-annotated per gate |
+| 🧭 Phased walkthrough | Preparation → Oracle → Diffusion progress bar, windowed circuit, plain-English state reading |
+| 🎯 Measurement + summary | Sampled measurement histogram, then measured-vs-expected success/fail verdict |
+| ⌨️ Interactive CLI | Step/back/jump/autoplay, Beginner ↔ Advanced modes, menu loop |
 | 🧩 Extensible by design | Clear contributor tiers (Beginner → Expert) — add algorithms, views, and more |
-| ✅ Tested | 25 passing tests, including non-palindromic bitstring cases |
+| ✅ Tested | 54 passing tests, including non-palindromic bitstring cases |
 
 **Jump straight to:**
 - **[→ Challenge description](2026-06-algorithm-visualizer/README.md)** — What to build + contribution tiers
-- **[→ Reference implementation](2026-06-algorithm-visualizer/qviz/README.md)** — Architecture + API
-- **[→ Contributor guide](2026-06-algorithm-visualizer/qviz/HANDOFF.md)** — Deep-dive for extending it
+- **[→ Package README](2026-06-algorithm-visualizer/qviz/README.md)** — Usage, API, quick start
+- **[→ Documentation index](2026-06-algorithm-visualizer/qviz/docs/README.md)** — Architecture, Developer Guide, Roadmap, FAQ, and more
+- **[→ Roadmap](2026-06-algorithm-visualizer/qviz/docs/Roadmap.md)** — Beginner → Expert contribution ideas
 
 ---
 

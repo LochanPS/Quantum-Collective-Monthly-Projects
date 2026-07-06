@@ -67,7 +67,14 @@ If you're building your own stepper rather than extending the reference:
 
 ## How to Contribute
 
-**Add an algorithm module:** depend on `qcsim` as a library, build the circuit, define step annotations — guide will land in `docs/adding-algorithms.md` alongside the full reveal.
+The reference implementation lives in [`qviz/`](qviz/), with full docs in
+[`qviz/docs/`](qviz/docs/README.md).
+
+**Add an algorithm module:** follow the [Algorithm Development guide](qviz/docs/Algorithm-Development.md) — build a circuit, return an `AlgorithmResult`.
+
+**Find something to build:** the [Roadmap](qviz/docs/Roadmap.md) lists Beginner → Expert ideas across algorithms, visualization, tooling, and docs.
+
+**Contribution workflow:** see [Contributing](qviz/docs/Contributing.md).
 
 **Submit your own visualizer:** fork, build, post in [GitHub Discussions → Submissions](https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/discussions/categories/submissions)
 
