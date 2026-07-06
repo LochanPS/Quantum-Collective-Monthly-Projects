@@ -19,15 +19,13 @@ a community challenge — the repo is public and contributors submit PRs.
 - **Challenge spec:** [`../../README.md`](../../README.md) — contribution
   tiers and context.
 
-## Critical design constraint: terminal-only
+Critical design constraint: terminal-only
 
-This repo is open-source (Apache-2.0). A separate product (the "Lab
-Suite") provides a graphical version built on the same engine. For qviz:
+qviz is intentionally designed as a terminal-first educational visualizer.
 
-**Do not add a graphical UI here.** No matplotlib, no web view, nothing
-beyond ASCII/ANSI in the terminal. Terminal-first is a deliberate product
-decision, not a limitation to "fix." Rendering features must degrade
-gracefully on ASCII-only terminals — see [Rendering-Guide.md](Rendering-Guide.md).
+Please keep this project focused on a clean, portable terminal experience. Do not add graphical interfaces (desktop, web, or browser-based), and avoid introducing GUI frameworks such as matplotlib or web views.
+
+Rendering features should continue to work on plain ASCII terminals by providing appropriate fallbacks. See Rendering-Guide.md for rendering guidelines.
 
 ## Per-module deep dive
 
