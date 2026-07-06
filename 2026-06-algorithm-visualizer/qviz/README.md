@@ -16,7 +16,12 @@ Ancilla and input registers are visually split in the state labels (`ancilla|inp
 
 ## Setup
 
+### First time (fresh clone)
+
 ```bash
+git clone https://github.com/LochanPS/Quantum-Collective-Monthly-Projects.git
+cd Quantum-Collective-Monthly-Projects/2026-06-algorithm-visualizer/qviz
+
 # qcsim isn't on PyPI yet -- install it first from the sibling folder
 pip install -e ../../2026-05-circuit-simulator/qcsim
 
@@ -26,6 +31,27 @@ pip install -e .
 # run the interactive stepper
 qviz-step
 ```
+
+### Already have the repo / an older qcsim?
+
+Pull the latest and reinstall both packages so you get the newest qcsim
+gates and the qviz visualizer (both are installed with `-e`, so a `git
+pull` picks up source changes automatically -- but re-run the installs if
+dependencies or entry points changed):
+
+```bash
+cd Quantum-Collective-Monthly-Projects
+git pull origin main
+
+cd 2026-06-algorithm-visualizer/qviz
+pip install -e ../../2026-05-circuit-simulator/qcsim   # refresh qcsim
+pip install -e .                                        # refresh qviz
+
+qviz-step
+```
+
+> If `qviz-step` isn't found after pulling, it means the entry point is new
+> in your checkout -- just re-run `pip install -e .` above to register it.
 
 ## Reference algorithms
 
