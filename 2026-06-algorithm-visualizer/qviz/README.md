@@ -6,6 +6,8 @@
 
 Step through a quantum algorithm one gate at a time and watch the state vector evolve, instead of only seeing the final answer. Built on top of `qcsim` (Monthly Project #1) — any circuit `qcsim` can build, `qviz` can step through.
 
+Every step shows: the gate's purpose in the algorithm, the state as amplitudes (or plain percentages), a phase column, a plain-English reading of what the state *means*, and — at the end — an algorithm-specific verdict (Balanced/Constant, recovered secret, target found). Changed amplitudes are highlighted; zero-probability states can be hidden. Beginner and Advanced detail modes toggle live.
+
 ## Setup
 
 ```bash
@@ -25,15 +27,18 @@ qviz-step
 |---|---|---|
 | Deutsch-Jozsa | `qviz.algorithms.deutsch_jozsa` | constant vs. balanced oracle, any input size |
 | Bernstein-Vazirani | `qviz.algorithms.bernstein_vazirani` | recovers a hidden bitstring, any length |
-| Grover's search | `qviz.algorithms.grover` | v1 supports 2-qubit marked states only — generalizing to N qubits needs a multi-controlled-Z oracle, a good Advanced-tier contribution |
-| Quantum Fourier Transform | `qviz.algorithms.qft_algorithm` | wraps qcsim's existing `qft()`; step annotations are intentionally generic right now — writing precise ones is a good Beginner-tier contribution |
+| Grover's search | `qviz.algorithms.grover` | v1 supports 2-qubit marked states only — generalizing to N qubits needs a multi-controlled-Z oracle, a good Advanced-tier contribution. Includes an amplitude-amplification-across-steps view |
+| Quantum Fourier Transform | `qviz.algorithms.qft_algorithm` | wraps qcsim's `qft()`; annotates each Hadamard / controlled-phase (with angle) / swap. Naming which frequency each phase encodes is a good Beginner-tier contribution |
+
+Each returns an `AlgorithmResult` (`circuit`, `annotations`, `title`, `info`, `summarize`) — see `qviz/algorithms/base.py`.
 
 ## Architecture
 
 - `stepper.py` — replays a circuit's gate log on a fresh state, snapshotting after every gate
-- `render.py` — terminal rendering (statevector bars, progress circuit diagram), same visual style as qcsim's `visualize.py`
-- `algorithms/` — each module returns `(circuit, annotations)`, one annotation string per gate
-- `cli.py` — interactive step/back/jump terminal interface
+- `interpret.py` — plain-English state reading, phase labels, ranked non-zero states
+- `render.py` — terminal rendering (amplitude/probability bars, phase column, change highlighting, progress diagram, beginner/advanced modes)
+- `algorithms/` — each module returns an `AlgorithmResult` (circuit + per-gate annotations + title + info panel + final summary)
+- `cli.py` — interactive stepper: step/back/jump/autoplay, mode + hide-zeros toggles, loops back to the menu when done
 
 ## Python API
 
@@ -44,8 +49,10 @@ from qviz import step_through, render_step
 qc = QuantumCircuit(2)
 qc.h(0).cnot(0, 1)
 
-for step in step_through(qc):
-    print(render_step(qc, step))
+steps = step_through(qc)
+for i, step in enumerate(steps):
+    prev = steps[i - 1] if i else None
+    print(render_step(qc, step, prev=prev, mode="advanced"))
 ```
 
 ## Tests
@@ -54,6 +61,6 @@ for step in step_through(qc):
 pytest tests/ -v
 ```
 
-25 passing tests: stepper correctness (final step matches circuit's actual final state, barriers produce no step, original circuit untouched), rendering, and per-algorithm correctness (including non-palindromic bitstring cases, which catch label-orientation bugs that symmetric test inputs like "11" or "101" would silently hide).
+39 passing tests: stepper correctness (final step matches circuit's actual final state, barriers produce no step, original circuit untouched), rendering + beginner/advanced modes, state interpretation, and per-algorithm correctness + summaries (including non-palindromic bitstring cases, which catch label-orientation bugs that symmetric test inputs like "11" or "101" would silently hide).
 
 See the [challenge README](../README.md) for contribution tiers (Beginner through Expert) and what the paid Lab Suite extends this with.

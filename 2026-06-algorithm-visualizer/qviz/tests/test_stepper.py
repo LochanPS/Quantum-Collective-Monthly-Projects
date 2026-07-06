@@ -6,6 +6,7 @@ import pytest
 from qcsim import QuantumCircuit
 from qviz import step_through
 from qviz.algorithms import bernstein_vazirani, deutsch_jozsa, grover, qft_algorithm
+from qviz.interpret import interpret_state, nonzero_states, phase_label
 from qviz.render import render_progress_circuit, render_statevector, render_step
 
 
@@ -96,19 +97,33 @@ class TestRender:
 
 class TestDeutschJozsa:
     def test_annotation_count_matches_gate_count(self):
-        qc, ann = deutsch_jozsa(2, "balanced")
-        assert len(ann) == len(qc._log)
+        res = deutsch_jozsa(2, "balanced")
+        assert len(res.annotations) == len(res.circuit._log)
 
     def test_constant_oracle_leaves_input_at_zero(self):
-        qc, _ = deutsch_jozsa(2, "constant_0")
-        probs = qc.probabilities()
+        res = deutsch_jozsa(2, "constant_0")
+        probs = res.circuit.probabilities()
         # Input qubits are q0,q1 (rightmost 2 chars); should always read '00'
         assert all(state[-2:] == "00" for state in probs)
 
     def test_balanced_oracle_leaves_input_nonzero(self):
-        qc, _ = deutsch_jozsa(2, "balanced")
-        probs = qc.probabilities()
+        res = deutsch_jozsa(2, "balanced")
+        probs = res.circuit.probabilities()
         assert all(state[-2:] != "00" for state in probs)
+
+    def test_summary_reports_constant(self):
+        res = deutsch_jozsa(2, "constant_0")
+        steps = step_through(res.circuit)
+        assert "CONSTANT" in res.summary(steps[-1])
+
+    def test_summary_reports_balanced(self):
+        res = deutsch_jozsa(2, "balanced")
+        steps = step_through(res.circuit)
+        assert "BALANCED" in res.summary(steps[-1])
+
+    def test_info_carries_oracle_type(self):
+        res = deutsch_jozsa(2, "balanced")
+        assert res.info["Oracle type"] == "balanced"
 
     def test_invalid_oracle_raises(self):
         with pytest.raises(ValueError):
@@ -117,21 +132,27 @@ class TestDeutschJozsa:
 
 class TestBernsteinVazirani:
     def test_annotation_count_matches_gate_count(self):
-        qc, ann = bernstein_vazirani("101")
-        assert len(ann) == len(qc._log)
+        res = bernstein_vazirani("101")
+        assert len(res.annotations) == len(res.circuit._log)
 
     def test_recovers_secret_with_certainty(self):
-        qc, _ = bernstein_vazirani("101")
-        probs = qc.probabilities()
+        res = bernstein_vazirani("101")
+        probs = res.circuit.probabilities()
         # qcsim labels are q(n-1)...q0 (leftmost = highest qubit), so the
         # input substring reads secret bits in reverse order.
         assert all(state[-3:][::-1] == "101" for state in probs)
 
     def test_recovers_non_palindromic_secret(self):
         """'101' is a palindrome -- reversal bugs hide there. Use '100' to catch them."""
-        qc, _ = bernstein_vazirani("100")
-        probs = qc.probabilities()
+        res = bernstein_vazirani("100")
+        probs = res.circuit.probabilities()
         assert all(state[-3:][::-1] == "100" for state in probs)
+
+    def test_summary_recovers_non_palindromic_secret(self):
+        res = bernstein_vazirani("100")
+        steps = step_through(res.circuit)
+        summary = res.summary(steps[-1])
+        assert "100" in summary and "matches" in summary
 
     def test_invalid_secret_raises(self):
         with pytest.raises(ValueError):
@@ -142,25 +163,27 @@ class TestBernsteinVazirani:
 
 class TestGrover:
     def test_annotation_count_matches_gate_count(self):
-        qc, ann = grover("11")
-        assert len(ann) == len(qc._log)
+        res = grover("11")
+        assert len(res.annotations) == len(res.circuit._log)
 
     def test_finds_marked_state(self):
-        qc, _ = grover("11")
-        probs = qc.probabilities()
-        assert probs.get("11", 0) > 0.99
+        res = grover("11")
+        assert res.circuit.probabilities().get("11", 0) > 0.99
 
     def test_finds_different_marked_state(self):
-        qc, _ = grover("01")
-        probs = qc.probabilities()
-        assert probs.get("01", 0) > 0.99
+        res = grover("01")
+        assert res.circuit.probabilities().get("01", 0) > 0.99
 
     def test_finds_asymmetric_marked_state_other_direction(self):
         """'01' and '10' are bit-reversals of each other -- catches the
         label-orientation bug that a palindromic target would hide."""
-        qc, _ = grover("10")
-        probs = qc.probabilities()
-        assert probs.get("10", 0) > 0.99
+        res = grover("10")
+        assert res.circuit.probabilities().get("10", 0) > 0.99
+
+    def test_summary_reports_found(self):
+        res = grover("10")
+        steps = step_through(res.circuit)
+        assert "FOUND" in res.summary(steps[-1])
 
     def test_invalid_marked_state_raises(self):
         with pytest.raises(ValueError):
@@ -169,10 +192,81 @@ class TestGrover:
 
 class TestQFT:
     def test_annotation_count_matches_gate_count(self):
-        qc, ann = qft_algorithm(3, "101")
-        assert len(ann) == len(qc._log)
+        res = qft_algorithm(3, "101")
+        assert len(res.annotations) == len(res.circuit._log)
 
     def test_returns_normalized_state(self):
-        qc, _ = qft_algorithm(3)
-        probs = qc.probabilities()
+        res = qft_algorithm(3)
+        probs = res.circuit.probabilities()
         assert abs(sum(probs.values()) - 1.0) < 1e-9
+
+    def test_annotations_mention_controlled_phase(self):
+        res = qft_algorithm(3)
+        assert any("Controlled-phase" in a for a in res.annotations)
+
+
+# ================================================================== #
+#  Interpretation
+# ================================================================== #
+
+class TestInterpret:
+    def test_definite_state(self):
+        qc = QuantumCircuit(1)
+        qc.x(0)
+        steps = step_through(qc)
+        assert "definitely" in interpret_state(steps[-1]).lower()
+
+    def test_uniform_superposition(self):
+        qc = QuantumCircuit(2)
+        qc.h(0).h(1)
+        steps = step_through(qc)
+        assert "uniform" in interpret_state(steps[-1]).lower()
+
+    def test_equal_superposition_subset(self):
+        qc = QuantumCircuit(2)
+        qc.h(0).cnot(0, 1)  # Bell: |00> + |11>
+        steps = step_through(qc)
+        text = interpret_state(steps[-1]).lower()
+        assert "superposition of 2" in text
+
+    def test_phase_label_pi(self):
+        qc = QuantumCircuit(1)
+        qc.x(0).z(0)  # Z|1> = -|1>, phase pi
+        steps = step_through(qc)
+        _, _, amp = nonzero_states(steps[-1])[0]
+        assert phase_label(amp) == "pi"
+
+    def test_nonzero_states_sorted_by_probability(self):
+        qc = QuantumCircuit(2)
+        qc.h(0).cnot(0, 1)
+        steps = step_through(qc)
+        probs = [p for _, p, _ in nonzero_states(steps[-1])]
+        assert probs == sorted(probs, reverse=True)
+
+
+# ================================================================== #
+#  Rendering modes
+# ================================================================== #
+
+class TestRenderModes:
+    def test_beginner_mode_hides_complex_numbers(self):
+        qc = QuantumCircuit(2)
+        qc.h(0).cnot(0, 1)
+        steps = step_through(qc)
+        out = render_statevector(steps[-1], mode="beginner")
+        assert "chance" in out
+        assert "i " not in out  # no imaginary component shown
+
+    def test_hide_zeros_omits_zero_states(self):
+        qc = QuantumCircuit(2)
+        qc.x(0)  # only |01> populated
+        steps = step_through(qc)
+        out = render_statevector(steps[-1], hide_zeros=True)
+        assert "hidden" in out
+
+    def test_render_step_includes_interpretation(self):
+        qc = QuantumCircuit(1)
+        qc.x(0)
+        steps = step_through(qc)
+        out = render_step(qc, steps[-1])
+        assert "State:" in out

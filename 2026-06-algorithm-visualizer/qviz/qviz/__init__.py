@@ -7,27 +7,34 @@ gate log one gate at a time, and snapshots the state at every step.
 Quick start::
 
     from qcsim import QuantumCircuit
-    from qviz import step_through
-    from qviz.render import render_step
+    from qviz import step_through, render_step
 
     qc = QuantumCircuit(2)
     qc.h(0).cnot(0, 1)
 
-    for step in step_through(qc):
-        print(render_step(step))
+    steps = step_through(qc)
+    for i, step in enumerate(steps):
+        prev = steps[i - 1] if i else None
+        print(render_step(qc, step, prev=prev))
 """
 
+from .algorithms import AlgorithmResult
+from .interpret import interpret_state, nonzero_states, phase_label
 from .render import render_progress_circuit, render_statevector, render_step
 from .stepper import Step, apply_log_entry, step_through
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Quantum Collective"
 
 __all__ = [
     "Step",
     "step_through",
     "apply_log_entry",
+    "AlgorithmResult",
     "render_step",
     "render_statevector",
     "render_progress_circuit",
+    "interpret_state",
+    "nonzero_states",
+    "phase_label",
 ]
