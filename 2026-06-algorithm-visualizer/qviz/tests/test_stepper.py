@@ -7,12 +7,22 @@ from qcsim import QuantumCircuit
 from qviz import step_through
 from qviz.algorithms import bernstein_vazirani, deutsch_jozsa, grover, qft_algorithm
 from qviz.interpret import interpret_state, nonzero_states, phase_label
-from qviz.render import render_progress_circuit, render_statevector, render_step
-
+from qviz.phases import current_segment_index, segments
+from qviz.render import (
+    render_execution_summary,
+    render_measurement,
+    render_phase_progress,
+    render_progress_circuit,
+    render_statevector,
+    render_step,
+    render_windowed_circuit,
+    sample_measurements,
+)
 
 # ================================================================== #
 #  Stepper correctness
 # ================================================================== #
+
 
 class TestStepper:
     def test_step_count_matches_non_barrier_gates(self):
@@ -65,6 +75,7 @@ class TestStepper:
 #  Rendering
 # ================================================================== #
 
+
 class TestRender:
     def test_render_statevector_returns_string(self):
         qc = QuantumCircuit(2)
@@ -94,6 +105,7 @@ class TestRender:
 # ================================================================== #
 #  Algorithm correctness
 # ================================================================== #
+
 
 class TestDeutschJozsa:
     def test_annotation_count_matches_gate_count(self):
@@ -209,6 +221,7 @@ class TestQFT:
 #  Interpretation
 # ================================================================== #
 
+
 class TestInterpret:
     def test_definite_state(self):
         qc = QuantumCircuit(1)
@@ -248,6 +261,7 @@ class TestInterpret:
 #  Rendering modes
 # ================================================================== #
 
+
 class TestRenderModes:
     def test_beginner_mode_hides_complex_numbers(self):
         qc = QuantumCircuit(2)
@@ -270,3 +284,116 @@ class TestRenderModes:
         steps = step_through(qc)
         out = render_step(qc, steps[-1])
         assert "State:" in out
+
+
+# ================================================================== #
+#  Phases, registers, structured outcome
+# ================================================================== #
+
+
+class TestPhasesAndOutcome:
+    def test_phases_align_with_gates(self):
+        for build, args in [
+            (deutsch_jozsa, (2, "balanced")),
+            (bernstein_vazirani, ("100",)),
+            (grover, ("10",)),
+            (qft_algorithm, (3, "101")),
+        ]:
+            res = build(*args)
+            steps = step_through(res.circuit)
+            assert len(res.phases) == len(res.annotations) == len(steps)
+
+    def test_segments_group_consecutive_phases(self):
+        segs = segments(["A", "A", "B", "B", "B", "A"])
+        assert segs == [("A", 0, 1), ("B", 2, 4), ("A", 5, 5)]
+
+    def test_current_segment_index(self):
+        segs = segments(["A", "A", "B", "B"])
+        assert current_segment_index(segs, 0) == 0
+        assert current_segment_index(segs, 3) == 1
+
+    def test_grover_has_all_three_phases(self):
+        res = grover("11")
+        assert set(res.phases) == {"Preparation", "Oracle", "Diffusion"}
+
+    def test_registers_split_input_and_ancilla(self):
+        res = deutsch_jozsa(2, "balanced")
+        assert res.registers["input"] == [0, 1]
+        assert res.registers["ancilla"] == [2]
+
+    def test_outcome_success_on_correct_run(self):
+        for build, args in [
+            (deutsch_jozsa, (2, "constant_0")),
+            (bernstein_vazirani, ("100",)),
+            (grover, ("10",)),
+        ]:
+            res = build(*args)
+            steps = step_through(res.circuit)
+            es = res.execution_summary(steps[-1])
+            assert es.success, f"{res.title} outcome not success"
+
+    def test_dj_outcome_matches_oracle_class(self):
+        res = deutsch_jozsa(2, "constant_1")
+        steps = step_through(res.circuit)
+        es = res.execution_summary(steps[-1])
+        assert es.expected == "CONSTANT" and es.measured == "CONSTANT"
+
+
+# ================================================================== #
+#  Redesign rendering: progress, windowed circuit, measurement, summary
+# ================================================================== #
+
+
+class TestRedesignRendering:
+    def test_phase_progress_marks_current(self):
+        res = grover("11")
+        steps = step_through(res.circuit)
+        out = render_phase_progress(res.phases, len(steps) - 1)
+        assert "Diffusion" in out  # last step is in the diffusion phase
+
+    def test_windowed_circuit_narrower_than_full(self):
+        res = grover("11", iterations=2)
+        full = render_progress_circuit(res.circuit, len(res.phases) - 1)
+        # a single-phase window should be no wider than the full circuit
+        window = render_windowed_circuit(res.circuit, 0, 1)
+        assert max(len(l) for l in window.splitlines()) <= max(len(l) for l in full.splitlines())
+
+    def test_sample_measurements_totals_shots(self):
+        res = grover("10")
+        steps = step_through(res.circuit)
+        counts = sample_measurements(steps[-1], res.registers["search"], shots=50)
+        assert sum(counts.values()) == 50
+
+    def test_measurement_projects_to_marked_state(self):
+        res = grover("10")
+        steps = step_through(res.circuit)
+        counts = sample_measurements(steps[-1], res.registers["search"], shots=50)
+        # Deterministic |10> final state -> every shot reads "10"
+        assert counts == {"10": 50}
+
+    def test_execution_summary_reports_success(self):
+        res = bernstein_vazirani("100")
+        steps = step_through(res.circuit)
+        out = render_execution_summary(res, steps[-1])
+        assert "Execution Summary" in out
+        assert "SUCCESS" in out
+        assert "100" in out
+
+    def test_measurement_stage_renders(self):
+        res = grover("11")
+        steps = step_through(res.circuit)
+        out = render_measurement(res, steps[-1], shots=20)
+        assert "Measurement" in out and "most frequent" in out
+
+    def test_register_split_in_statevector(self):
+        res = deutsch_jozsa(2, "balanced")
+        steps = step_through(res.circuit)
+        out = render_step(res.circuit, steps[-1], phases=res.phases, registers=res.registers)
+        assert "ancilla|input" in out
+
+    def test_hide_zeros_note_when_nothing_to_hide(self):
+        qc = QuantumCircuit(2)
+        qc.h(0).h(1)  # uniform: no zero states
+        steps = step_through(qc)
+        out = render_statevector(steps[-1], hide_zeros=True)
+        assert "no zero-probability states to hide" in out

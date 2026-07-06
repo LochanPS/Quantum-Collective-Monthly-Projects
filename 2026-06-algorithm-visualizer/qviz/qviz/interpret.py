@@ -51,7 +51,9 @@ def interpret_state(step: Step) -> str:
     """One-to-two sentence plain-English reading of the current state."""
     states = nonzero_states(step)
     if not states:
-        return "The state is empty (all amplitudes zero) -- this shouldn't happen for a valid circuit."
+        return (
+            "The state is empty (all amplitudes zero) -- this shouldn't happen for a valid circuit."
+        )
 
     dim = len(step.statevector)
     k = len(states)

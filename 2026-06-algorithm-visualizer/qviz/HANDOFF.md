@@ -114,7 +114,7 @@ the wording.
 
 ### `algorithms/*.py` — the reference algorithms
 
-**API (changed in v0.2):** each module's build function returns an
+**API (extended in v0.2):** each module's build function returns an
 `AlgorithmResult` (see `algorithms/base.py`), NOT the old
 `(circuit, annotations)` tuple. Fields:
 - `circuit` — the built qcsim circuit
@@ -122,11 +122,25 @@ the wording.
   `circuit._log` order (1:1 alignment is load-bearing — `cli.py` zips
   these onto `Step.annotation` by position; desync = silently wrong
   labels, so keep the annotation-count test for every algorithm)
+- `phases` — **one phase label per gate, parallel to `annotations`**
+  (`Preparation`/`Oracle`/`Diffusion`/`Interference`/`Transform`,
+  constants in `base.py`). Drives the progress bar and the windowed
+  circuit. Same 1:1-alignment rule as annotations — the
+  `test_phases_align_with_gates` test enforces it.
 - `title` — display name
 - `info` — dict of always-displayed defining facts (marked state,
   secret, oracle type) shown on every step
-- `summarize(final_step)` — returns the algorithm's plain-English answer
-  (Balanced/Constant, recovered secret, target found, QFT done)
+- `registers` — named qubit groups, e.g. `{"input": [0,1], "ancilla": [2]}`.
+  Used to split state labels (`ancilla|input`) and to pick which register
+  the measurement stage samples.
+- `summarize(final_step)` — plain-English narrative answer
+- `outcome(final_step)` — structured `ExecutionSummary`
+  (`measured`/`expected`/`success`/`takeaway`) for the end-of-run summary
+  and success/fail verdict
+
+Helpers in `base.py`: `input_register(bitstring, k)` extracts the rightmost
+`k` bits and reverses to q0..q(k-1) order (use in summaries to avoid
+re-deriving label orientation — see the Grover bug below).
 
 `input_register(bitstring, k)` in `base.py` extracts the rightmost `k`
 input-register bits from a full qcsim label and reverses them to q0..q(k-1)
@@ -186,7 +200,7 @@ python -m venv .venv
 .venv\Scripts\activate                          # Windows
 pip install -e ../../2026-05-circuit-simulator/qcsim   # qcsim first, not on PyPI
 pip install -e ".[dev]"
-pytest tests/ -v          # should show 39 passed
+pytest tests/ -v          # should show 54 passed
 qviz-step                 # try the interactive CLI
 ```
 
@@ -211,13 +225,21 @@ qviz-step                 # try the interactive CLI
 
 **Already done, don't re-do:**
 - Per-step state snapshotting (already incremental, not quadratic)
-- Circuit-diagram step highlighting (progressive rendering) + active-gate caption
-- Core four algorithms with correctness tests + per-algorithm final summaries
+- Core four algorithms with correctness tests + per-algorithm final summaries + structured `outcome()`
 - Plain-English state interpretation per step (`interpret.py`)
-- Changed-amplitude highlighting, hide-zero-states, phase column (`render.py`)
+- Changed-amplitude highlighting, hide-zero-states (with no-op note), phase column (`render.py`)
+- Phase progress bar + windowed circuit (only current phase's gates) — fixes long-horizontal circuits (`phases.py`, `render.py`)
+- Measurement stage (sampled histogram per register) + structured execution summary (measured/expected/success/takeaway)
+- Register-split state labels (`ancilla|input`)
+- Genuinely divergent Beginner (percentages, no circuit) vs Advanced (amplitudes, windowed circuit, phases) layouts
 - Beginner/advanced detail modes + autoplay + menu-loop flow (`cli.py`)
 - Grover amplitude-amplification-across-steps view
 - Mid-circuit MEASURE/RESET stepper support (the plumbing — not algorithm modules using it)
+
+**Deliberately NOT done (excluded as clutter):** full Before→After side-by-side
+per step. The change-highlighting (yellow) already shows what moved between
+steps without doubling the output height — that was the better call for a
+terminal-first, uncluttered UI.
 
 ## Commit message style (match the existing history)
 

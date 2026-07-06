@@ -13,8 +13,7 @@ import time
 from typing import Callable, Dict, List, Optional
 
 from .algorithms import AlgorithmResult, bernstein_vazirani, deutsch_jozsa, grover, qft_algorithm
-from .interpret import dominant_gap
-from .render import render_step
+from .render import render_execution_summary, render_measurement, render_step
 from .stepper import Step, step_through
 
 _BOLD = "\033[1m"
@@ -30,10 +29,13 @@ def _clear() -> None:
 #  Algorithm builders (prompt for parameters, return AlgorithmResult)
 # ------------------------------------------------------------------ #
 
+
 def _build_deutsch_jozsa() -> AlgorithmResult:
     n = input("  Number of input qubits [2]: ").strip()
     n = int(n) if n else 2
-    oracle = input("  Oracle [constant_0/constant_1/balanced, default balanced]: ").strip() or "balanced"
+    oracle = (
+        input("  Oracle [constant_0/constant_1/balanced, default balanced]: ").strip() or "balanced"
+    )
     return deutsch_jozsa(n, oracle)
 
 
@@ -98,7 +100,10 @@ def _grover_amplification_bars(result: AlgorithmResult, steps: List[Step]) -> st
 #  Interactive stepping
 # ------------------------------------------------------------------ #
 
-def _interactive_loop(result: AlgorithmResult, steps: List[Step], mode: str, hide_zeros: bool) -> str:
+
+def _interactive_loop(
+    result: AlgorithmResult, steps: List[Step], mode: str, hide_zeros: bool
+) -> str:
     """Runs the stepper UI. Returns the (possibly toggled) mode so it
     persists to the next algorithm chosen from the menu."""
     if not steps:
@@ -116,19 +121,29 @@ def _interactive_loop(result: AlgorithmResult, steps: List[Step], mode: str, hid
             print(info)
         print()
         prev = steps[idx - 1] if idx > 0 else None
-        print(render_step(result.circuit, steps[idx], prev=prev, mode=mode, hide_zeros=hide_zeros))
+        print(
+            render_step(
+                result.circuit,
+                steps[idx],
+                prev=prev,
+                mode=mode,
+                hide_zeros=hide_zeros,
+                phases=result.phases,
+                registers=result.registers,
+            )
+        )
         print()
 
         if idx == len(steps) - 1:
-            summary = result.summary(steps[idx])
-            if summary:
-                print(f"  {_BOLD}{summary}{_RESET}")
-                print()
             if result.title == "Grover's search":
                 bars = _grover_amplification_bars(result, steps)
                 if bars:
                     print(bars)
                     print()
+            print(render_measurement(result, steps[idx], shots=100))
+            print()
+            print(render_execution_summary(result, steps[idx]))
+            print()
 
         print(
             "  [Enter] next  [b] back  [j N] jump  [a] autoplay  "
@@ -155,7 +170,12 @@ def _interactive_loop(result: AlgorithmResult, steps: List[Step], mode: str, hid
 
 
 def _autoplay(
-    result: AlgorithmResult, steps: List[Step], start: int, mode: str, hide_zeros: bool, delay: float = 0.9
+    result: AlgorithmResult,
+    steps: List[Step],
+    start: int,
+    mode: str,
+    hide_zeros: bool,
+    delay: float = 0.9,
 ) -> int:
     """Advance automatically from `start` to the last step. Returns the
     final index so the caller lands there."""
@@ -167,7 +187,17 @@ def _autoplay(
             print(info)
         print()
         prev = steps[idx - 1] if idx > 0 else None
-        print(render_step(result.circuit, steps[idx], prev=prev, mode=mode, hide_zeros=hide_zeros))
+        print(
+            render_step(
+                result.circuit,
+                steps[idx],
+                prev=prev,
+                mode=mode,
+                hide_zeros=hide_zeros,
+                phases=result.phases,
+                registers=result.registers,
+            )
+        )
         if idx < len(steps) - 1:
             time.sleep(delay)
     return len(steps) - 1
@@ -176,6 +206,7 @@ def _autoplay(
 # ------------------------------------------------------------------ #
 #  Menu
 # ------------------------------------------------------------------ #
+
 
 def main() -> None:
     mode = "advanced"

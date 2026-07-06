@@ -49,6 +49,8 @@ jobs:
                         2026-05-circuit-simulator/qcsim/examples/ \
                         2026-05-circuit-simulator/qcsim/tests/ \
                         2026-05-circuit-simulator/circuit-library/ \
+                        2026-06-algorithm-visualizer/qviz/qviz/ \
+                        2026-06-algorithm-visualizer/qviz/tests/ \
                         --line-length 100
 
   library:
