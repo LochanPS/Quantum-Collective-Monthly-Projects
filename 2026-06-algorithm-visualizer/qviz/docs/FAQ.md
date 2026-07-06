@@ -64,7 +64,7 @@ See [Architecture.md](Architecture.md).
 
 Can I add a matplotlib chart, desktop UI, or web view?
 
-No. qviz is intentionally terminal-only. New visualization features should extend the terminal renderer while preserving ASCII compatibility. See Developer-Guide.md.
+No. qviz is intentionally terminal-only. New visualization features should extend the terminal renderer while preserving ASCII compatibility. See Developer-Guide.md
 ## Still stuck?
 
 Open a [GitHub issue](https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/issues)
