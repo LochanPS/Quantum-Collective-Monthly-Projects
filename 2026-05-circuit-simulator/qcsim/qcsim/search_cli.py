@@ -16,7 +16,7 @@ def main():
     # here.parent = .../2026-05-circuit-simulator/qcsim/
     # here.parent.parent = .../2026-05-circuit-simulator/
     candidates = [
-        here.parent.parent / "circuit-library" / "search.py",   # installed from repo
+        here.parent.parent / "circuit-library" / "search.py",  # installed from repo
         here.parent.parent.parent / "circuit-library" / "search.py",  # fallback
         Path.cwd() / "circuit-library" / "search.py",
     ]
@@ -36,5 +36,6 @@ def main():
 
     # Delegate: exec search.py with the same args
     import runpy
+
     sys.argv[0] = str(search_script)
     runpy.run_path(str(search_script), run_name="__main__")

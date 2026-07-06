@@ -23,6 +23,7 @@ from typing import List, Optional
 
 # ── Find library root ──────────────────────────────────────────────────────
 
+
 def _find_library_dir() -> Path:
     """Locate circuit-library/ directory.
 
@@ -54,6 +55,7 @@ def _find_library_dir() -> Path:
 
 
 # ── Core search ────────────────────────────────────────────────────────────
+
 
 def load_index(library_dir: Path) -> List[dict]:
     """Load and return all circuit entries from index.json."""
@@ -125,11 +127,12 @@ def list_all_tags(circuits: List[dict]) -> List[str]:
 
 # ── Display ────────────────────────────────────────────────────────────────
 
+
 def _col(text: str, width: int) -> str:
     """Left-justify text in a fixed-width column, truncating if needed."""
     text = str(text)
     if len(text) > width:
-        text = text[:width - 2] + ".."
+        text = text[: width - 2] + ".."
     return text.ljust(width)
 
 
@@ -180,6 +183,7 @@ def print_results(circuits: List[dict], library_dir: Path, verbose: bool = False
 
 # ── Load a circuit ─────────────────────────────────────────────────────────
 
+
 def load_circuit(circuit_entry: dict, library_dir: Path) -> dict:
     """Load and return the full JSON data for a circuit."""
     rel = circuit_entry.get("file", "")
@@ -204,6 +208,7 @@ def launch_tui_with_circuit(circuit_path: Path):
 
 
 # ── Interactive picker ─────────────────────────────────────────────────────
+
 
 def interactive_pick(circuits: List[dict], library_dir: Path, do_load: bool = False):
     """Let user pick a circuit from results by number."""
@@ -260,6 +265,7 @@ def interactive_pick(circuits: List[dict], library_dir: Path, do_load: bool = Fa
 
 # ── CLI ────────────────────────────────────────────────────────────────────
 
+
 def main():
     parser = argparse.ArgumentParser(
         prog="qcsim-search",
@@ -279,12 +285,22 @@ Examples:
     parser.add_argument("--tags", nargs="+", metavar="TAG", help="Filter by tags (all must match).")
     parser.add_argument("--qubits", type=int, metavar="N", help="Filter by exact qubit count.")
     parser.add_argument("--author", metavar="NAME", help="Filter by author (substring).")
-    parser.add_argument("--category", metavar="CAT", help="Filter by category (entanglement, algorithm, education, ...).")
-    parser.add_argument("--difficulty", metavar="DIFF", help="Filter by difficulty (beginner, intermediate, advanced).")
+    parser.add_argument(
+        "--category",
+        metavar="CAT",
+        help="Filter by category (entanglement, algorithm, education, ...).",
+    )
+    parser.add_argument(
+        "--difficulty",
+        metavar="DIFF",
+        help="Filter by difficulty (beginner, intermediate, advanced).",
+    )
     parser.add_argument("--verified", action="store_true", help="Show only verified circuits.")
     parser.add_argument("--load", action="store_true", help="Load selected circuit into qcsim TUI.")
     parser.add_argument("--list-tags", action="store_true", help="List all available tags.")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Show descriptions and fingerprints.")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Show descriptions and fingerprints."
+    )
 
     args = parser.parse_args()
 
@@ -305,8 +321,17 @@ Examples:
         print()
         return
 
-    if not any([args.query, args.tags, args.qubits, args.author,
-                args.category, args.difficulty, args.verified]):
+    if not any(
+        [
+            args.query,
+            args.tags,
+            args.qubits,
+            args.author,
+            args.category,
+            args.difficulty,
+            args.verified,
+        ]
+    ):
         results = all_circuits
         print(f"\n  All circuits in library ({len(results)} total):")
     else:

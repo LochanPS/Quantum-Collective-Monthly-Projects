@@ -8,13 +8,13 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from qcsim import QuantumCircuit
+from qcsim import QuantumCircuit, qft, inverse_qft
 from qcsim.exceptions import GateError, QubitIndexError
-
 
 # ================================================================== #
 #  Initial state
 # ================================================================== #
+
 
 class TestInitialState:
     def test_zero_state_probability(self):
@@ -36,6 +36,7 @@ class TestInitialState:
 # ================================================================== #
 #  Pauli gates
 # ================================================================== #
+
 
 class TestPauliGates:
     def test_x_flips(self):
@@ -76,6 +77,7 @@ class TestPauliGates:
 #  Hadamard
 # ================================================================== #
 
+
 class TestHadamard:
     def test_h_superposition(self):
         qc = QuantumCircuit(1)
@@ -95,14 +97,15 @@ class TestHadamard:
         for i in range(n):
             qc.h(i)
         probs = qc.probabilities()
-        assert len(probs) == 2 ** n
+        assert len(probs) == 2**n
         for p in probs.values():
-            assert abs(p - 1 / 2 ** n) < 1e-10
+            assert abs(p - 1 / 2**n) < 1e-10
 
 
 # ================================================================== #
 #  Phase gates (S, T)
 # ================================================================== #
+
 
 class TestPhaseGates:
     def test_s_on_one(self):
@@ -142,6 +145,7 @@ class TestPhaseGates:
 #  Rotation gates
 # ================================================================== #
 
+
 class TestRotationGates:
     def test_rx_pi_equals_x(self):
         """Rx(π) = -iX (same up to global phase)."""
@@ -178,6 +182,7 @@ class TestRotationGates:
 # ================================================================== #
 #  CNOT gate
 # ================================================================== #
+
 
 class TestCNOT:
     def test_bell_state_exact(self):
@@ -227,6 +232,7 @@ class TestCNOT:
 #  GHZ state
 # ================================================================== #
 
+
 class TestGHZ:
     def test_ghz_3_qubits(self):
         qc = QuantumCircuit(3)
@@ -250,6 +256,7 @@ class TestGHZ:
 # ================================================================== #
 #  SWAP gate
 # ================================================================== #
+
 
 class TestSWAP:
     def test_swap_basic(self):
@@ -276,6 +283,7 @@ class TestSWAP:
 #  CZ gate
 # ================================================================== #
 
+
 class TestCZ:
     def test_cz_phase_flip(self):
         """CZ|11⟩ = -|11⟩"""
@@ -291,6 +299,7 @@ class TestCZ:
         qc.cz(0, 1)
         sv = qc.statevector()
         assert abs(sv[0] - 1.0) < 1e-10
+
 
 class TestSXdg:
     def test_sxdg_exact_amplitudes_on_zero(self):
@@ -317,6 +326,7 @@ class TestSXdg:
 #  Toffoli gate
 # ================================================================== #
 
+
 class TestToffoli:
     def test_toffoli_both_controls_one(self):
         """CCX|110⟩ = |111⟩"""
@@ -336,6 +346,7 @@ class TestToffoli:
 # ================================================================== #
 #  5-qubit circuits
 # ================================================================== #
+
 
 class TestFiveQubits:
     def test_uniform_superposition(self):
@@ -369,6 +380,7 @@ class TestFiveQubits:
 # ================================================================== #
 #  Measurement
 # ================================================================== #
+
 
 class TestMeasurement:
     def test_state_preserved_after_measure(self):
@@ -425,6 +437,7 @@ class TestMeasurement:
 # ================================================================== #
 #  Circuit operations
 # ================================================================== #
+
 
 class TestCircuitOps:
     def test_reset(self):
@@ -559,6 +572,7 @@ class TestCircuitOps:
 #  Error handling
 # ================================================================== #
 
+
 class TestErrorHandling:
     def test_invalid_qubit_raises(self):
         qc = QuantumCircuit(2)
@@ -592,6 +606,7 @@ class TestErrorHandling:
 # ================================================================== #
 #  Quantum algorithm correctness
 # ================================================================== #
+
 
 class TestAlgorithms:
     def test_deutsch_jozsa_constant_f0(self):
@@ -634,10 +649,31 @@ class TestAlgorithms:
         # After 1 Grover iteration on 2 qubits, |11⟩ should dominate
         assert probs.get("11", 0) > 0.95
 
+    def test_qft_iqft_recovers_basis_state(self):
+        """QFT followed by IQFT should recover |101⟩. (contributed by skgn07)"""
+        qc = QuantumCircuit(3)
+        qc.x(0)
+        qc.x(2)
+        original = qc.statevector().copy()
+        qft(qc, [0, 1, 2])
+        inverse_qft(qc, [0, 1, 2])
+        assert np.allclose(original, qc.statevector())
+
+    def test_qft_iqft_recovers_superposition(self):
+        """QFT followed by IQFT should recover a superposition state. (contributed by skgn07)"""
+        qc = QuantumCircuit(3)
+        qc.h(0)
+        qc.h(1)
+        original = qc.statevector().copy()
+        qft(qc, [0, 1, 2])
+        inverse_qft(qc, [0, 1, 2])
+        assert np.allclose(original, qc.statevector())
+
 
 # ================================================================== #
 #  Qiskit export
 # ================================================================== #
+
 
 class TestQiskitExport:
     def test_export_returns_string(self):
@@ -682,6 +718,7 @@ class TestQiskitExport:
 
     def test_export_rotation_gates(self):
         import math
+
         qc = QuantumCircuit(1)
         qc.rx(0, math.pi / 2)
         code = qc.to_qiskit_code()
@@ -716,6 +753,7 @@ class TestQiskitExport:
     def test_export_ghz_is_valid_python(self):
         """The exported code must be syntactically valid Python."""
         import ast
+
         qc = QuantumCircuit(3)
         qc.h(0).cnot(0, 1).cnot(0, 2)
         code = qc.to_qiskit_code()
@@ -726,6 +764,7 @@ class TestQiskitExport:
 # ================================================================== #
 #  OpenQASM 2.0 export
 # ================================================================== #
+
 
 class TestQASM2Export:
     def test_qasm_header(self):
@@ -770,6 +809,7 @@ class TestQASM2Export:
 
     def test_qasm_rotation_gates(self):
         import math
+
         qc = QuantumCircuit(1)
         qc.rx(0, math.pi)
         qasm = qc.to_qasm2()
@@ -800,6 +840,7 @@ class TestQASM2Export:
 #  Cirq export
 # ================================================================== #
 
+
 class TestCirqExport:
     def test_export_returns_string(self):
         qc = QuantumCircuit(2)
@@ -809,6 +850,7 @@ class TestCirqExport:
 
     def test_export_is_valid_python(self):
         import ast
+
         qc = QuantumCircuit(3)
         qc.h(0).cnot(0, 1).cy(1, 2).cp(0, 2, 1.2).rx(2, 0.5).s(0).t(1).sxdg(2)
         code = qc.to_cirq_code()
@@ -851,6 +893,7 @@ class TestCirqExport:
 
     def test_export_cp_phase_gate(self):
         import math
+
         qc = QuantumCircuit(2)
         qc.cp(0, 1, math.pi)
         code = qc.to_cirq_code()
@@ -866,6 +909,7 @@ class TestCirqExport:
 # ================================================================== #
 #  OpenQASM 3.0 export
 # ================================================================== #
+
 
 class TestQASM3Export:
     def test_export_returns_string(self):
@@ -926,6 +970,7 @@ class TestQASM3Export:
 #  Quil (Rigetti) export
 # ================================================================== #
 
+
 class TestQuilExport:
     def test_export_returns_string(self):
         qc = QuantumCircuit(2)
@@ -959,6 +1004,7 @@ class TestQuilExport:
 
     def test_export_cz_and_cphase(self):
         import math
+
         qc = QuantumCircuit(2)
         qc.cz(0, 1).cp(0, 1, math.pi / 2)
         quil = qc.to_quil()

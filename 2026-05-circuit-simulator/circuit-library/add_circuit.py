@@ -34,17 +34,23 @@ try:
     # parent.parent = .../2026-05-circuit-simulator/
     sys.path.insert(0, str(Path(__file__).parent.parent / "qcsim"))
     from qcsim.fingerprint import compute as _fp_compute
+
     def _compute_fingerprint(gates, num_qubits):
         return _fp_compute(gates, num_qubits)
+
 except ImportError:
     import hashlib, json as _json
+
     def _compute_fingerprint(gates, num_qubits):
         raw = _json.dumps(
-            {"gates": sorted(gates, key=lambda g: (g.get("col",0), g.get("row",0))),
-             "num_qubits": num_qubits},
+            {
+                "gates": sorted(gates, key=lambda g: (g.get("col", 0), g.get("row", 0))),
+                "num_qubits": num_qubits,
+            },
             sort_keys=True,
         )
         return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
 
 LIBRARY_DIR = Path(__file__).parent
 INDEX_FILE = LIBRARY_DIR / "index.json"
@@ -77,7 +83,14 @@ def _load_canonical_tags() -> set:
         return set(json.load(f).get("tags", {}).keys())
 
 
-VALID_CATEGORIES = {"entanglement", "algorithm", "education", "error-correction", "benchmark", "other"}
+VALID_CATEGORIES = {
+    "entanglement",
+    "algorithm",
+    "education",
+    "error-correction",
+    "benchmark",
+    "other",
+}
 VALID_DIFFICULTIES = {"beginner", "intermediate", "advanced"}
 
 
@@ -157,8 +170,7 @@ def _prompt_missing_metadata(data: dict) -> dict:
         data["version"] = "1.0"
     if not data.get("num_gates"):
         data["num_gates"] = sum(
-            1 for g in data.get("gates", [])
-            if g.get("gate") not in ("CNOT_T", "SWAP_B")
+            1 for g in data.get("gates", []) if g.get("gate") not in ("CNOT_T", "SWAP_B")
         )
     data["verified"] = False  # maintainer sets this to True after review
 
@@ -201,7 +213,9 @@ def main():
             print(f"\nDuplicate detected!")
             print(f"  This circuit matches: {existing['name']} ({existing['file']})")
             print(f"  Fingerprint: {fp}")
-            print("\nIf your circuit is genuinely different (different algorithm, different approach),")
+            print(
+                "\nIf your circuit is genuinely different (different algorithm, different approach),"
+            )
             print("modify a gate position so the fingerprint differs, then resubmit.")
             sys.exit(1)
 
@@ -225,20 +239,22 @@ def main():
     print(f"\nAdded: {dest}")
 
     # Update index with full metadata
-    index["circuits"].append({
-        "file": dest_rel,
-        "name": data["name"],
-        "num_qubits": data["num_qubits"],
-        "num_gates": data.get("num_gates", 0),
-        "category": data.get("category", ""),
-        "difficulty": data.get("difficulty", ""),
-        "tags": data.get("tags", []),
-        "fingerprint": fp,
-        "author": data.get("author", "unknown"),
-        "created_at": data.get("created_at", ""),
-        "version": data.get("version", "1.0"),
-        "verified": data.get("verified", False),
-    })
+    index["circuits"].append(
+        {
+            "file": dest_rel,
+            "name": data["name"],
+            "num_qubits": data["num_qubits"],
+            "num_gates": data.get("num_gates", 0),
+            "category": data.get("category", ""),
+            "difficulty": data.get("difficulty", ""),
+            "tags": data.get("tags", []),
+            "fingerprint": fp,
+            "author": data.get("author", "unknown"),
+            "created_at": data.get("created_at", ""),
+            "version": data.get("version", "1.0"),
+            "verified": data.get("verified", False),
+        }
+    )
     save_index(index)
 
     print(f"\nFingerprint : {fp}")

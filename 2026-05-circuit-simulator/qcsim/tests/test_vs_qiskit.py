@@ -42,14 +42,15 @@ def _compare(qcsim_qc: QuantumCircuit, qiskit_qc: QiskitCircuit) -> None:
         phase = ours[idx] / theirs[idx]
         theirs = theirs * phase
 
-    assert np.allclose(ours, theirs, atol=TOL), (
-        f"Statevectors differ.\nqcsim:  {ours}\nQiskit: {theirs}"
-    )
+    assert np.allclose(
+        ours, theirs, atol=TOL
+    ), f"Statevectors differ.\nqcsim:  {ours}\nQiskit: {theirs}"
 
 
 # ------------------------------------------------------------------ #
 #  Tests
 # ------------------------------------------------------------------ #
+
 
 def test_bell_state_vs_qiskit():
     """Bell state: H(0) + CNOT(0,1)."""

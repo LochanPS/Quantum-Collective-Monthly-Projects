@@ -48,7 +48,7 @@ __all__ = [
     "banner",
     "draw_statevector",
     "draw_histogram",
-    #Algorithms
+    # Algorithms
     "qft",
     "inverse_qft",
 ]

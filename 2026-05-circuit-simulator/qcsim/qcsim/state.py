@@ -24,7 +24,7 @@ class QuantumState:
             num_qubits: Number of qubits in the system.
         """
         self.num_qubits = num_qubits
-        self.dim = 2 ** num_qubits
+        self.dim = 2**num_qubits
         self._vec: np.ndarray = np.zeros(self.dim, dtype=complex)
         self._vec[0] = 1.0 + 0j  # |00...0⟩
 
@@ -66,11 +66,7 @@ class QuantumState:
             Dict mapping bitstring (e.g. '01') to float probability.
         """
         probs = self.probabilities()
-        return {
-            self.label(i): float(probs[i])
-            for i in range(self.dim)
-            if probs[i] > threshold
-        }
+        return {self.label(i): float(probs[i]) for i in range(self.dim) if probs[i] > threshold}
 
     def label(self, index: int) -> str:
         """Convert a state-vector index to a bitstring (LSB convention).

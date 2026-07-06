@@ -16,8 +16,8 @@ from typing import List, Optional
 
 from .fingerprint import compute as compute_fingerprint, jaccard_similarity
 
-
 # ── Load known patterns ─────────────────────────────────────────────────────
+
 
 def _find_patterns_file() -> Optional[Path]:
     """Find known_patterns.json in the circuit-library directory."""
@@ -50,6 +50,7 @@ def _load_known_patterns() -> List[dict]:
 
 # ── Structural rule-based recognition ──────────────────────────────────────
 
+
 def _structural_recognize(gates: List[dict], num_qubits: int) -> str:
     """Identify patterns from gate structure when fingerprint doesn't match."""
     gate_types = [g.get("gate", "") for g in gates]
@@ -59,14 +60,11 @@ def _structural_recognize(gates: List[dict], num_qubits: int) -> str:
     count = len(active)
 
     # Bell state: exactly H + CNOT on 2 qubits
-    if (num_qubits == 2 and count == 2
-            and "H" in types and "CNOT_C" in types):
+    if num_qubits == 2 and count == 2 and "H" in types and "CNOT_C" in types:
         return "Bell State"
 
     # GHZ state: H + n-1 CNOTs on n qubits
-    if (count == num_qubits
-            and types.count("H") == 1
-            and types.count("CNOT_C") == num_qubits - 1):
+    if count == num_qubits and types.count("H") == 1 and types.count("CNOT_C") == num_qubits - 1:
         return f"GHZ State ({num_qubits} qubits)"
 
     # Uniform superposition: all H gates
@@ -85,6 +83,7 @@ def _structural_recognize(gates: List[dict], num_qubits: int) -> str:
 
 
 # ── Main recognition function ───────────────────────────────────────────────
+
 
 def recognize(gates: List[dict], num_qubits: int) -> str:
     """Attempt to recognize a circuit as a known pattern.

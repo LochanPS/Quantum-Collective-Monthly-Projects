@@ -32,12 +32,12 @@ def main():
     circuits = index.get("circuits", [])
     print(f"Checking {len(circuits)} circuit(s)...\n")
 
-    seen_fingerprints: dict[str, str] = {}   # fingerprint -> name
-    seen_names: dict[str, str] = {}          # lower_name -> file
+    seen_fingerprints: dict[str, str] = {}  # fingerprint -> name
+    seen_names: dict[str, str] = {}  # lower_name -> file
 
     for entry in circuits:
         name = entry.get("name", "?")
-        fp   = entry.get("fingerprint", "")
+        fp = entry.get("fingerprint", "")
         file = entry.get("file", "")
         path = LIBRARY_DIR / file
 

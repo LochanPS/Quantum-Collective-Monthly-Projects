@@ -32,6 +32,7 @@ from .fingerprint import compute as compute_fingerprint
 #  Cross-platform keyboard input
 # ================================================================== #
 
+
 def _read_key() -> str:
     """Read one keypress and return a normalised string.
 
@@ -45,11 +46,15 @@ def _read_key() -> str:
 
 def _read_key_windows() -> str:
     import msvcrt
+
     ch = msvcrt.getch()
     if ch in (b"\x00", b"\xe0"):  # special key prefix
         ch2 = msvcrt.getch()
         return {
-            b"H": "up", b"P": "down", b"K": "left", b"M": "right",
+            b"H": "up",
+            b"P": "down",
+            b"K": "left",
+            b"M": "right",
             b"S": "backspace",
         }.get(ch2, "")
     if ch == b"\r":
@@ -58,7 +63,7 @@ def _read_key_windows() -> str:
         return "esc"
     if ch == b"\x08":
         return "backspace"
-    if ch == b"\x0b":   # Ctrl+K
+    if ch == b"\x0b":  # Ctrl+K
         return "ctrl+k"
     try:
         return ch.decode("utf-8").lower()
@@ -69,6 +74,7 @@ def _read_key_windows() -> str:
 def _read_key_unix() -> str:
     import tty
     import termios
+
     fd = sys.stdin.fileno()
     old = termios.tcgetattr(fd)
     try:
@@ -77,13 +83,16 @@ def _read_key_unix() -> str:
         if ch == "\x1b":
             rest = sys.stdin.read(2)
             return {
-                "[A": "up", "[B": "down", "[C": "right", "[D": "left",
+                "[A": "up",
+                "[B": "down",
+                "[C": "right",
+                "[D": "left",
             }.get(rest, "esc")
         if ch == "\r" or ch == "\n":
             return "enter"
         if ch in ("\x08", "\x7f"):
             return "backspace"
-        if ch == "\x0b":   # Ctrl+K
+        if ch == "\x0b":  # Ctrl+K
             return "ctrl+k"
         return ch.lower()
     finally:
@@ -102,11 +111,13 @@ def _file_link(abs_path: str) -> str:
     Ctrl+click (Windows Terminal / VS Code) opens the file directly.
     """
     from urllib.parse import quote
+
     # URL-encode spaces and special chars so paths with spaces work fully
     uri = "file:///" + quote(abs_path.replace("\\", "/"), safe="/:")
-    supports = (
-        os.environ.get("WT_SESSION")
-        or os.environ.get("TERM_PROGRAM") in ("vscode", "iTerm.app", "Hyper")
+    supports = os.environ.get("WT_SESSION") or os.environ.get("TERM_PROGRAM") in (
+        "vscode",
+        "iTerm.app",
+        "Hyper",
     )
     if supports:
         # OSC 8 hyperlink: ESC ] 8 ; ; URI ST display-text ST
@@ -129,22 +140,22 @@ def _input(prompt: str) -> str:
 
 # Display symbols for each gate type (ASCII-safe)
 _GATE_DISPLAY: Dict[str, str] = {
-    "H":        "H",
-    "X":        "X",
-    "Y":        "Y",   # Pauli-Y gate
-    "Z":        "Z",   # Pauli-Z gate
-    "S":        "S",   # Phase gate
-    "T":        "T",   # π/8 gate
-    "SXdg":     "D",   # SX-dagger gate
-    "CNOT_C":   "@",   # CNOT control  (@  looks like a control dot)
-    "CNOT_T":   "+",   # CNOT target   (+ looks like XOR/circle-plus)
-    "SWAP_A":   "~",   # SWAP endpoint A
-    "SWAP_B":   "~",   # SWAP endpoint B
-    "CP_C":     "#",   # CP control    (# for phase)
-    "CP_T":     "P",   # CP target     (P for phase)
-    "CY_C":     "@",   # CY control    (@ same as CNOT control)
-    "CY_T":     "Y",   # CY target     (Y for Pauli-Y)
-    "":         " ",   # empty
+    "H": "H",
+    "X": "X",
+    "Y": "Y",  # Pauli-Y gate
+    "Z": "Z",  # Pauli-Z gate
+    "S": "S",  # Phase gate
+    "T": "T",  # π/8 gate
+    "SXdg": "D",  # SX-dagger gate
+    "CNOT_C": "@",  # CNOT control  (@  looks like a control dot)
+    "CNOT_T": "+",  # CNOT target   (+ looks like XOR/circle-plus)
+    "SWAP_A": "~",  # SWAP endpoint A
+    "SWAP_B": "~",  # SWAP endpoint B
+    "CP_C": "#",  # CP control    (# for phase)
+    "CP_T": "P",  # CP target     (P for phase)
+    "CY_C": "@",  # CY control    (@ same as CNOT control)
+    "CY_T": "Y",  # CY target     (Y for Pauli-Y)
+    "": " ",  # empty
 }
 
 # Keys the user presses to place gates
@@ -164,17 +175,20 @@ _BASIC_GATES = ["H", "X", "CNOT", "SWAP"]
 #  Data model
 # ================================================================== #
 
+
 @dataclass
 class Cell:
     """One slot in the circuit grid."""
-    gate: str = ""          # gate type or '' for empty
-    linked_row: int = -1    # for two-qubit gates: the row of the partner qubit
+
+    gate: str = ""  # gate type or '' for empty
+    linked_row: int = -1  # for two-qubit gates: the row of the partner qubit
     params: Optional[dict] = None  # extra gate parameters (e.g. {"lam": 1.57} for CP)
 
 
 @dataclass
 class CircuitGrid:
     """The full grid of cells."""
+
     num_qubits: int
     num_cols: int
     cells: List[List[Cell]] = field(default_factory=list)
@@ -184,10 +198,7 @@ class CircuitGrid:
             self.reset()
 
     def reset(self):
-        self.cells = [
-            [Cell() for _ in range(self.num_cols)]
-            for _ in range(self.num_qubits)
-        ]
+        self.cells = [[Cell() for _ in range(self.num_cols)] for _ in range(self.num_qubits)]
 
     def get(self, row: int, col: int) -> Cell:
         return self.cells[row][col]
@@ -257,6 +268,7 @@ class CircuitGrid:
 #  Renderer
 # ================================================================== #
 
+
 def _render_grid(
     grid: CircuitGrid,
     cursor_row: int,
@@ -274,9 +286,7 @@ def _render_grid(
     lines.append("  +-----------------------------------------+")
     lines.append("  |   qcsim Interactive Circuit Builder      |")
     lines.append("  +-----------------------------------------+")
-    lines.append(
-        f"  Qubits: {n}   Cols: {nc}   Backend: {backend}"
-    )
+    lines.append(f"  Qubits: {n}   Cols: {nc}   Backend: {backend}")
     lines.append("")
 
     # Grid
@@ -302,10 +312,18 @@ def _render_grid(
                 cell = grid.get(row, col)
                 next_cell = grid.get(row + 1, col)
                 # Draw | if this cell connects to row+1 or row+1 connects here
-                _LINKED_GATES = ("CNOT_C", "CNOT_T", "SWAP_A", "SWAP_B", "CP_C", "CP_T", "CY_C", "CY_T")
-                show_vert = (
-                    (cell.gate in _LINKED_GATES and cell.linked_row == row + 1)
-                    or (next_cell.gate in _LINKED_GATES and next_cell.linked_row == row)
+                _LINKED_GATES = (
+                    "CNOT_C",
+                    "CNOT_T",
+                    "SWAP_A",
+                    "SWAP_B",
+                    "CP_C",
+                    "CP_T",
+                    "CY_C",
+                    "CY_T",
+                )
+                show_vert = (cell.gate in _LINKED_GATES and cell.linked_row == row + 1) or (
+                    next_cell.gate in _LINKED_GATES and next_cell.linked_row == row
                 )
                 if show_vert:
                     conn += "   |  "
@@ -322,11 +340,11 @@ def _render_grid(
 
     # Mode / status line
     mode_labels = {
-        "NORMAL":      "NORMAL",
-        "CNOT_FIRST":  "CNOT: press [C] on control qubit (target locked)",
-        "SWAP_FIRST":  "SWAP: press [W] on second qubit (first locked)",
-        "CP_FIRST":    "CP: press [P] on control qubit (target locked)",
-        "CY_FIRST":    "CY: press [V] on control qubit (target locked)",
+        "NORMAL": "NORMAL",
+        "CNOT_FIRST": "CNOT: press [C] on control qubit (target locked)",
+        "SWAP_FIRST": "SWAP: press [W] on second qubit (first locked)",
+        "CP_FIRST": "CP: press [P] on control qubit (target locked)",
+        "CY_FIRST": "CY: press [V] on control qubit (target locked)",
     }
     lines.append(f"  Mode : {mode_labels.get(mode, mode)}")
     lines.append(f"  Pos  : q[{cursor_row}], col {cursor_col}")
@@ -349,6 +367,7 @@ def _render_grid(
 # ================================================================== #
 #  Builder (main state machine)
 # ================================================================== #
+
 
 class CircuitBuilder:
     """Interactive circuit builder state machine."""
@@ -626,6 +645,7 @@ class CircuitBuilder:
 
     def _handle_cp(self):
         import math
+
         r, c = self.cursor_row, self.cursor_col
         if self.mode == "NORMAL":
             # First press = TARGET; prompt for phase angle
@@ -942,7 +962,7 @@ class CircuitBuilder:
         print(f"  | {title.center(width - 2)} |")
         print(border)
         for line in body:
-            padded = line[:width - 2].ljust(width - 2)
+            padded = line[: width - 2].ljust(width - 2)
             print(f"  | {padded} |")
         print(border)
         print()
@@ -982,6 +1002,7 @@ class CircuitBuilder:
         except Exception as exc:
             print(f"  Simulation error: {exc}")
             import traceback
+
             traceback.print_exc()
 
         print()
@@ -1133,8 +1154,10 @@ class CircuitBuilder:
             self.cursor_col = 0
             self.mode = "NORMAL"
             self.status = f"Loaded: {data.get('name', 'circuit')}"
-            print(f"\n  Loaded '{data.get('name')}' — "
-                  f"{self.grid.num_qubits}q, {self.grid.num_cols} cols.")
+            print(
+                f"\n  Loaded '{data.get('name')}' — "
+                f"{self.grid.num_qubits}q, {self.grid.num_cols} cols."
+            )
         except Exception as exc:
             print(f"  Error loading: {exc}")
 
@@ -1167,6 +1190,7 @@ class CircuitBuilder:
 # ================================================================== #
 #  Entry point
 # ================================================================== #
+
 
 def main():
     """Entry point for qcsim-interactive.

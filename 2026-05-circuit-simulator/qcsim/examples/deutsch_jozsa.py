@@ -10,17 +10,17 @@ Run: python examples/deutsch_jozsa.py
 """
 
 import sys, os
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from qcsim import QuantumCircuit, draw_histogram, banner
-
 
 # ================================================================== #
 #  Oracle builders
 # ================================================================== #
 
-def constant_oracle(qc: QuantumCircuit, input_qubits: list, ancilla: int,
-                    output: int) -> None:
+
+def constant_oracle(qc: QuantumCircuit, input_qubits: list, ancilla: int, output: int) -> None:
     """Oracle for constant function f(x) = output (0 or 1).
 
     If output == 1: flip the ancilla (X gate).
@@ -55,6 +55,7 @@ def balanced_oracle(qc: QuantumCircuit, input_qubits: list, ancilla: int) -> Non
 # ================================================================== #
 #  Deutsch-Jozsa circuit
 # ================================================================== #
+
 
 def deutsch_jozsa(n_input: int, oracle_type: str = "balanced") -> QuantumCircuit:
     """Build the Deutsch-Jozsa circuit.
@@ -125,6 +126,7 @@ def classify(counts: dict, n_input: int) -> str:
 #  Main
 # ================================================================== #
 
+
 def main():
     print(banner())
     print()
@@ -135,7 +137,7 @@ def main():
     for oracle_type, expected in [
         ("constant0", "constant"),
         ("constant1", "constant"),
-        ("balanced",  "balanced"),
+        ("balanced", "balanced"),
     ]:
         print(f"  Oracle: {oracle_type}  (expected: {expected})")
         print()

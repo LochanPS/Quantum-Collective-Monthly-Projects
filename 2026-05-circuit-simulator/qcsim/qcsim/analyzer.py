@@ -17,8 +17,38 @@ if TYPE_CHECKING:
 # Gate categories for classification
 _TWO_QUBIT_GATES = {"CNOT_C", "CNOT", "CX", "CY", "CZ", "SWAP_A", "SWAP", "CP", "CCX"}
 _T_GATES = {"T", "Tdg"}
-_SINGLE_QUBIT_GATES = {"H", "X", "Y", "Z", "S", "Sdg", "SX", "SXdg", "Rx", "Ry", "Rz", "P", "U", "I"}
-_CLIFFORD_GATES = {"H", "X", "Y", "Z", "S", "Sdg", "SX", "SXdg", "CNOT", "CNOT_C", "CX", "CZ", "SWAP_A", "SWAP"}
+_SINGLE_QUBIT_GATES = {
+    "H",
+    "X",
+    "Y",
+    "Z",
+    "S",
+    "Sdg",
+    "SX",
+    "SXdg",
+    "Rx",
+    "Ry",
+    "Rz",
+    "P",
+    "U",
+    "I",
+}
+_CLIFFORD_GATES = {
+    "H",
+    "X",
+    "Y",
+    "Z",
+    "S",
+    "Sdg",
+    "SX",
+    "SXdg",
+    "CNOT",
+    "CNOT_C",
+    "CX",
+    "CZ",
+    "SWAP_A",
+    "SWAP",
+}
 
 
 @dataclass
@@ -26,16 +56,16 @@ class CircuitMetrics:
     """All computed metrics for a circuit."""
 
     num_qubits: int = 0
-    gate_count: int = 0          # total gates placed
-    depth: int = 0               # max occupied column index + 1
+    gate_count: int = 0  # total gates placed
+    depth: int = 0  # max occupied column index + 1
     single_qubit_count: int = 0
     two_qubit_count: int = 0
-    t_gate_count: int = 0        # T + Tdg (fault-tolerance cost)
+    t_gate_count: int = 0  # T + Tdg (fault-tolerance cost)
     non_clifford_count: int = 0  # non-Clifford gates (cost on fault-tolerant QPU)
-    entangled: bool = False      # any 2-qubit gate present?
-    qubits_used: int = 0         # number of qubits with at least one gate
-    utilization_pct: float = 0.0 # qubits_used / num_qubits * 100
-    empty: bool = True           # no gates at all
+    entangled: bool = False  # any 2-qubit gate present?
+    qubits_used: int = 0  # number of qubits with at least one gate
+    utilization_pct: float = 0.0  # qubits_used / num_qubits * 100
+    empty: bool = True  # no gates at all
 
     def summary_line(self) -> str:
         """One-line human-readable summary for the TUI info panel."""

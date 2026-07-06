@@ -9,14 +9,15 @@ Run: python examples/grover.py
 """
 
 import sys, os, math
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from qcsim import QuantumCircuit, draw_histogram, banner
 
-
 # ================================================================== #
 #  Oracle and diffusion
 # ================================================================== #
+
 
 def phase_oracle(qc: QuantumCircuit, target: str) -> None:
     """Apply a phase oracle that marks the target bitstring with -1 phase.
@@ -122,7 +123,7 @@ def grover(n: int, target: str, iterations: int = None) -> QuantumCircuit:
         Executed QuantumCircuit.
     """
     if iterations is None:
-        iterations = max(1, int(math.pi / 4 * math.sqrt(2 ** n)))
+        iterations = max(1, int(math.pi / 4 * math.sqrt(2**n)))
 
     qc = QuantumCircuit(n)
 
@@ -143,6 +144,7 @@ def grover(n: int, target: str, iterations: int = None) -> QuantumCircuit:
 #  Main
 # ================================================================== #
 
+
 def main():
     print(banner())
     print()
@@ -154,7 +156,7 @@ def main():
 
     for target in targets:
         n = len(target)
-        iters = max(1, int(math.pi / 4 * math.sqrt(2 ** n)))
+        iters = max(1, int(math.pi / 4 * math.sqrt(2**n)))
         print(f"  Target: |{target}>  |  {n} qubits  |  {2**n} items  |  {iters} iteration(s)")
         print()
 

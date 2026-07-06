@@ -42,3 +42,11 @@ Thumbs.db
 *.whl
 *.tar.gz
 MANIFEST
+
+# Local scratch exports (personal test circuits, not part of the repo)
+2026-05-circuit-simulator/qcsim/*.qasm
+2026-05-circuit-simulator/qcsim/*_qiskit.py
+2026-05-circuit-simulator/qcsim/ghz_qiskit.py
+2026-05-circuit-simulator/qcsim/lochan*.json
+2026-05-circuit-simulator/qcsim/sd.json
+2026-05-circuit-simulator/qcsim/test1.json

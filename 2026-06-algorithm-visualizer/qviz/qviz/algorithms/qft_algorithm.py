@@ -50,10 +50,12 @@ def qft_algorithm(num_qubits: int = 3, initial_state: Optional[str] = None) -> A
             )
         elif name in ("CP", "P"):
             lam = (params or {}).get("lam", 0.0)
-            frac = lam / math.pi
+            # pi/n notation (adopted from skgn07's PR) reads cleaner than a raw
+            # multiple-of-pi for QFT phases, which are always pi/2^k.
+            angle_str = f"pi/{round(math.pi / lam)}" if abs(lam) > 1e-12 else f"{lam:.3g} rad"
             annotations.append(
-                f"Controlled-phase ({frac:.3g}*pi rad) on q{qubits}: rotates the target's phase only when the control is |1>, "
-                f"encoding a finer frequency component"
+                f"Controlled-phase ({angle_str}) on q{qubits}: rotates the target's phase only when the control is |1>, "
+                f"encoding a finer frequency component of the transform"
             )
         elif name == "SWAP":
             annotations.append(

@@ -20,6 +20,7 @@ _S2 = 1.0 / np.sqrt(2.0)  # 1/√2
 #  Single-qubit gates
 # ================================================================== #
 
+
 def I() -> np.ndarray:
     """Identity gate. No-op.
 
@@ -179,9 +180,7 @@ def Rz(theta: float) -> np.ndarray:
     Returns:
         2x2 complex rotation matrix.
     """
-    return np.array(
-        [[np.exp(-1j * theta / 2), 0], [0, np.exp(1j * theta / 2)]], dtype=complex
-    )
+    return np.array([[np.exp(-1j * theta / 2), 0], [0, np.exp(1j * theta / 2)]], dtype=complex)
 
 
 def P(lam: float) -> np.ndarray:
@@ -229,6 +228,7 @@ def U(theta: float, phi: float, lam: float) -> np.ndarray:
 #  arbitrary qubit positions via Kronecker expansion.
 # ================================================================== #
 
+
 def CNOT() -> np.ndarray:
     """CNOT gate matrix (control qubit first, then target qubit).
 
@@ -238,9 +238,7 @@ def CNOT() -> np.ndarray:
     Returns:
         4x4 complex array.
     """
-    return np.array(
-        [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex
-    )
+    return np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex)
 
 
 def CZ_mat() -> np.ndarray:
@@ -250,6 +248,7 @@ def CZ_mat() -> np.ndarray:
         4x4 complex array.
     """
     return np.diag([1.0, 1.0, 1.0, -1.0]).astype(complex)
+
 
 def CY_mat() -> np.ndarray:
     """Controlled-Y gate matrix.
@@ -273,6 +272,7 @@ def CY_mat() -> np.ndarray:
         dtype=complex,
     )
 
+
 def CP_mat(lam: float) -> np.ndarray:
     """Controlled phase gate.
 
@@ -288,9 +288,8 @@ def CP_mat(lam: float) -> np.ndarray:
     Returns:
         4x4 complex array.
     """
-    return np.diag(
-        [1, 1, 1, np.exp(1j * lam)]
-    ).astype(complex)
+    return np.diag([1, 1, 1, np.exp(1j * lam)]).astype(complex)
+
 
 def CCNOT_mat() -> np.ndarray:
     """Toffoli (CCNOT) gate matrix.
@@ -302,7 +301,7 @@ def CCNOT_mat() -> np.ndarray:
        |100⟩, |101⟩, |110⟩, |111⟩
     Returns:
        8x8 complex array.
-   """
+    """
     mat = np.eye(8, dtype=complex)
 
     mat[6, 6] = 0
@@ -313,15 +312,14 @@ def CCNOT_mat() -> np.ndarray:
 
     return mat
 
+
 def SWAP_mat() -> np.ndarray:
     """SWAP gate matrix. Exchanges two qubit states.
 
     Returns:
         4x4 complex array.
     """
-    return np.array(
-        [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex
-    )
+    return np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex)
 
 
 # ================================================================== #
@@ -330,6 +328,15 @@ def SWAP_mat() -> np.ndarray:
 
 #: Maps gate name → factory function (for gates with no parameters).
 SINGLE_QUBIT_GATES: dict[str, object] = {
-    "I": I, "H": H, "X": X, "Y": Y, "Z": Z,
-    "S": S, "Sdg": Sdg, "T": T, "Tdg": Tdg, "SX": SX, "SXdg": SXdg,
+    "I": I,
+    "H": H,
+    "X": X,
+    "Y": Y,
+    "Z": Z,
+    "S": S,
+    "Sdg": Sdg,
+    "T": T,
+    "Tdg": Tdg,
+    "SX": SX,
+    "SXdg": SXdg,
 }

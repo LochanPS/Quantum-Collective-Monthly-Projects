@@ -122,6 +122,7 @@ def compute_from_log(log: list, num_qubits: int) -> str:
 
 # ── Similarity ─────────────────────────────────────────────────────────────
 
+
 def _gate_type_multiset(gates: List[dict]) -> Counter:
     """Build a Counter of gate type names (ignoring position/params)."""
     return Counter(g.get("gate", "") for g in gates)

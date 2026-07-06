@@ -142,9 +142,7 @@ class QuantumCircuit:
         ops[n - 1 - qubit] = gate  # qubit 0 → rightmost Kronecker factor
         return reduce(np.kron, ops)
 
-    def _expand_controlled(
-        self, target_gate: np.ndarray, control: int, target: int
-    ) -> np.ndarray:
+    def _expand_controlled(self, target_gate: np.ndarray, control: int, target: int) -> np.ndarray:
         """Build the 2^N × 2^N matrix for a controlled single-qubit gate.
 
         Uses the projector decomposition:
@@ -192,7 +190,7 @@ class QuantumCircuit:
         X = G.X()
 
         # 4 terms: |c0 c1⟩⟨c0 c1| ⊗ (X if c0=c1=1 else I)
-        result = np.zeros((2 ** n, 2 ** n), dtype=complex)
+        result = np.zeros((2**n, 2**n), dtype=complex)
         for c0 in range(2):
             for c1 in range(2):
                 ops: List[np.ndarray] = [_I2] * n
@@ -246,7 +244,7 @@ class QuantumCircuit:
         axis = n - 1 - qubit
         sv = np.tensordot(gate, sv, axes=[[1], [axis]])
         sv = np.moveaxis(sv, 0, axis)
-        self._state.set(sv.reshape(2 ** n))
+        self._state.set(sv.reshape(2**n))
 
     def _tensor_cnot(self, ctrl: int, tgt: int) -> None:
         """Apply CNOT via tensor slicing (tensor backend).
@@ -271,7 +269,7 @@ class QuantumCircuit:
         # In the ctrl=1 slice (n-1 dims), find the adjusted target axis
         adj_tgt = tgt_ax if tgt_ax < ctrl_ax else tgt_ax - 1
         sv[tuple(idx)] = np.flip(sv_ctrl1, axis=adj_tgt).copy()
-        self._state.set(sv.reshape(2 ** n))
+        self._state.set(sv.reshape(2**n))
 
     def _tensor_swap(self, a: int, b: int) -> None:
         """Apply SWAP via np.swapaxes (tensor backend).
@@ -285,7 +283,7 @@ class QuantumCircuit:
         n = self.num_qubits
         sv = self._state.amplitudes().reshape([2] * n)
         sv = np.swapaxes(sv, n - 1 - a, n - 1 - b)
-        self._state.set(sv.reshape(2 ** n).copy())
+        self._state.set(sv.reshape(2**n).copy())
 
     def _tensor_toffoli(self, ctrl0: int, ctrl1: int, tgt: int) -> None:
         """Apply Toffoli via tensor slicing (tensor backend).
@@ -315,7 +313,7 @@ class QuantumCircuit:
                 adj -= 1
 
         sv[tuple(idx)] = np.flip(sv_slice, axis=adj).copy()
-        self._state.set(sv.reshape(2 ** n))
+        self._state.set(sv.reshape(2**n))
 
     def _gate_single(self, gate: np.ndarray, qubit: int) -> None:
         """Dispatch single-qubit gate to the active backend."""
@@ -353,12 +351,9 @@ class QuantumCircuit:
             sv_ctrl1 = np.tensordot(gate, sv_ctrl1, axes=[[1], [adj_tgt]])
             sv_ctrl1 = np.moveaxis(sv_ctrl1, 0, adj_tgt)
             sv[tuple(idx)] = sv_ctrl1
-            self._state.set(sv.reshape(2 ** n))
+            self._state.set(sv.reshape(2**n))
         else:
             self._apply(self._expand_controlled(gate, ctrl, tgt))
-
-    
-    
 
     def _gate_toffoli(self, c0: int, c1: int, tgt: int) -> None:
         """Dispatch Toffoli to the active backend."""
@@ -816,7 +811,7 @@ class QuantumCircuit:
             GateError: If the matrix dimensions do not match the number of qubits.
         """
         k = len(qubits)
-        expected = 2 ** k
+        expected = 2**k
         mat = np.asarray(matrix, dtype=complex)
         if mat.shape != (expected, expected):
             raise GateError(
@@ -854,11 +849,11 @@ class QuantumCircuit:
         """
         n = self.num_qubits
         k = len(qubits)
-        dim = 2 ** n
+        dim = 2**n
         result = np.zeros((dim, dim), dtype=complex)
         # Sum over all 2^k input/output basis state pairs
-        for row_idx in range(2 ** k):
-            for col_idx in range(2 ** k):
+        for row_idx in range(2**k):
+            for col_idx in range(2**k):
                 amp = mat[row_idx, col_idx]
                 if abs(amp) < 1e-15:
                     continue
@@ -885,10 +880,9 @@ class QuantumCircuit:
             # Extract bits for our target qubits (LSB: qubit j is bit n-1-j from MSB)
             tgt_bits = [(basis_idx >> (n - 1 - (n - 1 - q))) & 1 for q in qubits]
             # That simplifies to: bit for qubit q in LSB = (basis_idx >> q) & 1
-            tgt_input = sum(((basis_idx >> q) & 1) << (k - 1 - i)
-                            for i, q in enumerate(qubits))
+            tgt_input = sum(((basis_idx >> q) & 1) << (k - 1 - i) for i, q in enumerate(qubits))
             new_state = np.zeros(dim, dtype=complex)
-            for tgt_out in range(2 ** k):
+            for tgt_out in range(2**k):
                 coeff = mat[tgt_out, tgt_input]
                 if abs(coeff) < 1e-15:
                     continue
@@ -961,8 +955,7 @@ class QuantumCircuit:
         """
         if other.num_qubits != self.num_qubits:
             raise CircuitCompositionError(
-                f"Cannot compose circuits with {self.num_qubits} and "
-                f"{other.num_qubits} qubits."
+                f"Cannot compose circuits with {self.num_qubits} and " f"{other.num_qubits} qubits."
             )
         # Re-apply all gates from `other` to this circuit's state
         for name, qubits, params in other._log:
@@ -973,9 +966,7 @@ class QuantumCircuit:
                 self._replay_gate(name, qubits, params)
         return self
 
-    def _replay_gate(
-        self, name: str, qubits: List[int], params: Optional[dict]
-    ) -> None:
+    def _replay_gate(self, name: str, qubits: List[int], params: Optional[dict]) -> None:
         """Replay a single gate from a log entry onto this circuit."""
         p = params or {}
         dispatch = {
@@ -1142,16 +1133,14 @@ class QuantumCircuit:
             Multi-line string. Pass to print() for display.
         """
         from .visualize import draw_circuit
+
         return draw_circuit(self)
 
     def __str__(self) -> str:
         return self.draw()
 
     def __repr__(self) -> str:
-        return (
-            f"QuantumCircuit(num_qubits={self.num_qubits}, "
-            f"gates={len(self._log)})"
-        )
+        return f"QuantumCircuit(num_qubits={self.num_qubits}, " f"gates={len(self._log)})"
 
     def __eq__(self, other: object) -> bool:
         """Structural equality: same qubit count and same gate sequence.
@@ -1244,9 +1233,17 @@ class QuantumCircuit:
         """
         # Map qcsim gate names → Qiskit method names (no-param single-qubit)
         _SIMPLE: Dict[str, str] = {
-            "I": "id", "H": "h", "X": "x", "Y": "y", "Z": "z",
-            "S": "s", "Sdg": "sdg", "T": "t", "Tdg": "tdg",
-            "SX": "sx", "SXdg": "sxdg",
+            "I": "id",
+            "H": "h",
+            "X": "x",
+            "Y": "y",
+            "Z": "z",
+            "S": "s",
+            "Sdg": "sdg",
+            "T": "t",
+            "Tdg": "tdg",
+            "SX": "sx",
+            "SXdg": "sxdg",
         }
 
         def _fmt(val: float) -> str:
@@ -1273,8 +1270,7 @@ class QuantumCircuit:
                 return f"{var}.p({_fmt(p['lam'])}, {q[0]})"
             if name == "U":
                 return (
-                    f"{var}.u({_fmt(p['theta'])}, {_fmt(p['phi'])}, "
-                    f"{_fmt(p['lam'])}, {q[0]})"
+                    f"{var}.u({_fmt(p['theta'])}, {_fmt(p['phi'])}, " f"{_fmt(p['lam'])}, {q[0]})"
                 )
 
             # Two-qubit gates
@@ -1312,7 +1308,7 @@ class QuantumCircuit:
             "# IBM account (one-time):",
             "#   1. Sign up free at https://quantum.ibm.com",
             "#   2. Copy your API token from account settings",
-            "#   3. Run once:  python -c \"from qiskit_ibm_runtime import "
+            '#   3. Run once:  python -c "from qiskit_ibm_runtime import '
             "QiskitRuntimeService; "
             "QiskitRuntimeService.save_account(channel='ibm_quantum', "
             "token='YOUR_TOKEN_HERE', overwrite=True)\"",
@@ -1404,9 +1400,17 @@ class QuantumCircuit:
         """
         # Gates defined in the standard qelib1.inc header
         _SIMPLE: Dict[str, str] = {
-            "I": "id", "H": "h", "X": "x", "Y": "y", "Z": "z",
-            "S": "s", "Sdg": "sdg", "T": "t", "Tdg": "tdg",
-            "SX": "sx", "SXdg": "sxdg",
+            "I": "id",
+            "H": "h",
+            "X": "x",
+            "Y": "y",
+            "Z": "z",
+            "S": "s",
+            "Sdg": "sdg",
+            "T": "t",
+            "Tdg": "tdg",
+            "SX": "sx",
+            "SXdg": "sxdg",
         }
 
         def _fmt(val: float) -> str:
@@ -1430,10 +1434,7 @@ class QuantumCircuit:
             if name == "P":
                 return f"p({_fmt(p['lam'])}) q[{q[0]}];"
             if name == "U":
-                return (
-                    f"u({_fmt(p['theta'])},{_fmt(p['phi'])},{_fmt(p['lam'])}) "
-                    f"q[{q[0]}];"
-                )
+                return f"u({_fmt(p['theta'])},{_fmt(p['phi'])},{_fmt(p['lam'])}) " f"q[{q[0]}];"
 
             # Two-qubit gates
             if name in ("CNOT", "CX"):
@@ -1516,7 +1517,13 @@ class QuantumCircuit:
         import math
 
         _SIMPLE: Dict[str, str] = {
-            "I": "I", "H": "H", "X": "X", "Y": "Y", "Z": "Z", "S": "S", "T": "T",
+            "I": "I",
+            "H": "H",
+            "X": "X",
+            "Y": "Y",
+            "Z": "Z",
+            "S": "S",
+            "T": "T",
         }
         _ADJOINT: Dict[str, str] = {"Sdg": "S", "Tdg": "T"}
 
@@ -1562,8 +1569,7 @@ class QuantumCircuit:
             if name == "CP":
                 t = p["lam"] / math.pi
                 return (
-                    f"{var}.append(cirq.CZPowGate(exponent={_fmt(t)})"
-                    f"({_q(q[0])}, {_q(q[1])}))"
+                    f"{var}.append(cirq.CZPowGate(exponent={_fmt(t)})" f"({_q(q[0])}, {_q(q[1])}))"
                 )
 
             if name in ("CCX", "Toffoli"):
@@ -1626,9 +1632,17 @@ class QuantumCircuit:
             >>> print(qc.to_qasm3())
         """
         _SIMPLE: Dict[str, str] = {
-            "I": "id", "H": "h", "X": "x", "Y": "y", "Z": "z",
-            "S": "s", "Sdg": "sdg", "T": "t", "Tdg": "tdg",
-            "SX": "sx", "SXdg": "sxdg",
+            "I": "id",
+            "H": "h",
+            "X": "x",
+            "Y": "y",
+            "Z": "z",
+            "S": "s",
+            "Sdg": "sdg",
+            "T": "t",
+            "Tdg": "tdg",
+            "SX": "sx",
+            "SXdg": "sxdg",
         }
 
         def _fmt(val: float) -> str:
@@ -1650,10 +1664,7 @@ class QuantumCircuit:
             if name == "P":
                 return f"p({_fmt(p['lam'])}) q[{q[0]}];"
             if name == "U":
-                return (
-                    f"U({_fmt(p['theta'])},{_fmt(p['phi'])},{_fmt(p['lam'])}) "
-                    f"q[{q[0]}];"
-                )
+                return f"U({_fmt(p['theta'])},{_fmt(p['phi'])},{_fmt(p['lam'])}) " f"q[{q[0]}];"
             if name in ("CNOT", "CX"):
                 return f"cx q[{q[0]}], q[{q[1]}];"
             if name == "CY":
@@ -1713,8 +1724,14 @@ class QuantumCircuit:
             >>> print(qc.to_quil())
         """
         _SIMPLE: Dict[str, str] = {
-            "I": "I", "H": "H", "X": "X", "Y": "Y", "Z": "Z",
-            "S": "S", "T": "T", "SX": "V",  # Quil's V == sqrt(X)
+            "I": "I",
+            "H": "H",
+            "X": "X",
+            "Y": "Y",
+            "Z": "Z",
+            "S": "S",
+            "T": "T",
+            "SX": "V",  # Quil's V == sqrt(X)
         }
         _ADJOINT: Dict[str, str] = {"Sdg": "S", "Tdg": "T", "SXdg": "V"}
 
