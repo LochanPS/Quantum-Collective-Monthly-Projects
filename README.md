@@ -17,7 +17,7 @@ Quantum-Collective-Monthly-Projects/
 │   ├── qcsim/                               ← Full reference implementation
 │   │   ├── qcsim/                          ← Core simulator source code
 │   │   ├── examples/                       ← Runnable examples (Bell, GHZ, Grover, etc.)
-│   │   ├── tests/                          ← 52 tests
+│   │   ├── tests/                          ← 124 tests
 │   │   ├── docs/adding-gates.md            ← How to add new gates
 │   │   └── README.md                       ← Full qcsim documentation
 │   ├── circuit-library/                    ← Community-submitted circuits
@@ -28,7 +28,8 @@ Quantum-Collective-Monthly-Projects/
 │   ├── EXAMPLES.md                         ← Expected API patterns
 │   └── README.md                           ← Challenge description + what to build
 │
-├── 2026-06-algorithm-visualizer/            ← June 2026: Coming soon
+├── 2026-06-algorithm-visualizer/            ← July 2026: Quantum Algorithm Visualizer (LIVE)
+│   └── qviz/                                ← Reference implementation (depends on qcsim)
 │
 ├── docs/
 │   └── FAQ.md                              ← Frequently asked questions
@@ -64,8 +65,8 @@ pip install -e . && qcsim-interactive
 | 📚 Circuit Library | Searchable community circuits |
 | 🐍 Python API | Clean method chaining, Qiskit-compatible |
 | 💪 Dual Backends | Kronecker (readable) + Tensor (scales to 20+ qubits) |
-| 📤 Code Export | Export circuits as Qiskit `.py` or OpenQASM 2.0 `.qasm` — run on IBM Quantum, Cirq, Braket |
-| ✅ Tested | 77 passing tests, Qiskit-compatible output |
+| 📤 Code Export | Export as Qiskit `.py`, OpenQASM 2.0/3.0, Cirq, or Quil — run on IBM Quantum, Cirq, Braket, Rigetti |
+| ✅ Tested | 124 passing tests, Qiskit-compatible output |
 
 **Jump straight to:**
 - **[→ Full documentation](2026-05-circuit-simulator/qcsim/README.md)** — API, TUI guide, architecture
@@ -76,12 +77,41 @@ pip install -e . && qcsim-interactive
 
 ---
 
+### July 2026 — Quantum Algorithm Visualizer
+
+Step through a quantum algorithm one gate at a time and watch the state vector evolve — instead of only seeing the final answer. Built on top of `qcsim` (imports it as a library), terminal-only.
+
+**Try it now:**
+```bash
+git clone https://github.com/LochanPS/Quantum-Collective-Monthly-Projects.git
+cd Quantum-Collective-Monthly-Projects/2026-06-algorithm-visualizer/qviz
+pip install -e ../../2026-05-circuit-simulator/qcsim   # install qcsim first
+pip install -e . && qviz-step
+```
+
+**What's inside:**
+| Feature | Description |
+|---------|-------------|
+| ⏯️ Step-through engine | Replay any circuit gate-by-gate, snapshot state at every step |
+| 🧮 Core four algorithms | QFT, Grover, Deutsch-Jozsa, Bernstein-Vazirani — with per-gate annotations |
+| 📊 Terminal rendering | Statevector bars + progressive circuit diagram (current step highlighted) |
+| ⌨️ Interactive CLI | Step forward/back/jump through any algorithm live |
+| 🧩 Extensible by design | Clear contributor tiers (Beginner → Expert) — add algorithms, views, and more |
+| ✅ Tested | 25 passing tests, including non-palindromic bitstring cases |
+
+**Jump straight to:**
+- **[→ Challenge description](2026-06-algorithm-visualizer/README.md)** — What to build + contribution tiers
+- **[→ Reference implementation](2026-06-algorithm-visualizer/qviz/README.md)** — Architecture + API
+- **[→ Contributor guide](2026-06-algorithm-visualizer/qviz/HANDOFF.md)** — Deep-dive for extending it
+
+---
+
 ## 📅 Challenges
 
 | Month | Challenge | Status | Folder |
 |-------|-----------|--------|--------|
 | May 2026 | Quantum Circuit Simulator | ✅ Live | [`2026-05-circuit-simulator/`](2026-05-circuit-simulator/) |
-| July 2026 | Algorithm Visualizer | 🔜 Details July 1 | [`2026-06-algorithm-visualizer/`](2026-06-algorithm-visualizer/) |
+| July 2026 | Quantum Algorithm Visualizer | ✅ Live | [`2026-06-algorithm-visualizer/`](2026-06-algorithm-visualizer/) |
 
 ---
 
