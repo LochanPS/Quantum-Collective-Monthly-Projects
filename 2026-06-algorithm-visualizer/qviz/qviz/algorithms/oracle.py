@@ -9,6 +9,8 @@ without changing Grover itself.
 
 from __future__ import annotations
 
+from typing import Callable
+
 from qcsim import QuantumCircuit
 
 from .base import PHASE_ORACLE
@@ -17,68 +19,39 @@ from .base import PHASE_ORACLE
 def apply_oracle(
     qc: QuantumCircuit,
     marked_state: str,
-    annotations: list[str],
-    phases: list[str],
+    add: Callable[[str, str], None],
     iteration: int | None = None,
 ) -> None:
     """
     Apply the Grover oracle.
-
-    The marked state receives a phase flip.
-
-    Parameters
-    ----------
-    qc
-        Quantum circuit.
-
-    marked_state
-        Bitstring to mark.
-
-    annotations
-        Visualization annotations.
-
-    phases
-        Phase labels.
-
-    iteration
-        Optional iteration number for annotation.
     """
 
-    tag = ""
-    if iteration is not None:
-        tag = f"[iter {iteration}] "
+    tag = f"[iter {iteration}] " if iteration is not None else ""
 
-    # qcsim labels qubits opposite to string order
+    # qcsim labels bitstrings opposite to qubit order
     target_bits = marked_state[::-1]
 
-    #
     # Map target state onto |11>
-    #
     for q, bit in enumerate(target_bits):
         if bit == "0":
             qc.x(q)
-            annotations.append(
-                f"{tag}Oracle: flip q{q} so target maps to |11>"
+            add(
+                f"{tag}Oracle: flip q{q} so target maps to |11>",
+                PHASE_ORACLE,
             )
-            phases.append(PHASE_ORACLE)
 
-    #
     # Phase flip
-    #
     qc.cz(0, 1)
-
-    annotations.append(
-        f"{tag}Oracle: apply phase flip to |{marked_state}>"
+    add(
+        f"{tag}Oracle: apply phase flip to |{marked_state}>",
+        PHASE_ORACLE,
     )
-    phases.append(PHASE_ORACLE)
 
-    #
     # Undo mapping
-    #
     for q, bit in enumerate(target_bits):
         if bit == "0":
             qc.x(q)
-            annotations.append(
-                f"{tag}Oracle: restore original basis"
+            add(
+                f"{tag}Oracle: restore original basis",
+                PHASE_ORACLE,
             )
-            phases.append(PHASE_ORACLE)

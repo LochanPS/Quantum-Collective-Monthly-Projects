@@ -13,8 +13,8 @@ from typing import Optional
 from qcsim import QuantumCircuit
 
 from .oracle import apply_oracle
+from .diffuser import apply_diffuser
 from .base import (
-    PHASE_DIFFUSION,
     PHASE_PREPARATION,
     AlgorithmResult,
     ExecutionSummary,
@@ -25,21 +25,7 @@ def grover(
     marked_state: str = "11",
     iterations: Optional[int] = None,
 ) -> AlgorithmResult:
-    """Build a 2-qubit Grover search circuit.
-
-    Args:
-        marked_state:
-            The target computational basis state
-            (e.g. "11").
-
-        iterations:
-            Number of Grover iterations.
-            Defaults to 1 which is optimal for 2 qubits.
-
-    Returns
-    -------
-    AlgorithmResult
-    """
+    """Build a 2-qubit Grover search circuit."""
 
     if len(marked_state) != 2 or any(bit not in "01" for bit in marked_state):
         raise ValueError(
@@ -57,13 +43,12 @@ def grover(
         phases.append(phase)
 
     def h_all(note: str, phase: str) -> None:
-        """Apply Hadamard to every qubit."""
         for q in (0, 1):
             qc.h(q)
             add(note, phase)
 
     #
-    # State preparation
+    # Preparation
     #
     h_all(
         "Hadamard: build uniform superposition -- every state starts at 25% probability",
@@ -71,7 +56,6 @@ def grover(
     )
 
     if iterations is None:
-        # floor(pi/4 * sqrt(4))
         iterations = 1
 
     #
@@ -79,66 +63,21 @@ def grover(
     #
     for it in range(iterations):
 
-        tag = f"[iter {it + 1}] " if iterations > 1 else ""
+        iteration = it + 1 if iterations > 1 else None
 
-        #
-        # Oracle
-        #
         apply_oracle(
             qc=qc,
             marked_state=marked_state,
             add=add,
-            iteration=it + 1 if iterations > 1 else None,
+            iteration=iteration,
         )
 
-        #
-        # Diffusion operator
-        #
-        h_all(
-            f"{tag}Diffusion: Hadamard into the |+> basis",
-            PHASE_DIFFUSION,
+        apply_diffuser(
+            qc=qc,
+            add=add,
+            iteration=iteration,
         )
 
-        qc.x(0)
-        add(
-            f"{tag}Diffusion: X on q0",
-            PHASE_DIFFUSION,
-        )
-
-        qc.x(1)
-        add(
-            f"{tag}Diffusion: X on q1",
-            PHASE_DIFFUSION,
-        )
-
-        qc.cz(0, 1)
-        add(
-            f"{tag}Diffusion: reflect amplitudes about their average -- "
-            "the negative target grows, the rest shrink "
-            "(amplitude amplification)",
-            PHASE_DIFFUSION,
-        )
-
-        qc.x(0)
-        add(
-            f"{tag}Diffusion: undo X on q0",
-            PHASE_DIFFUSION,
-        )
-
-        qc.x(1)
-        add(
-            f"{tag}Diffusion: undo X on q1",
-            PHASE_DIFFUSION,
-        )
-
-        h_all(
-            f"{tag}Diffusion: Hadamard back to the computational basis",
-            PHASE_DIFFUSION,
-        )
-
-    #
-    # Visualization summary
-    #
     def summarize(step) -> str:
         top_label, top_prob = max(
             step.probabilities.items(),
