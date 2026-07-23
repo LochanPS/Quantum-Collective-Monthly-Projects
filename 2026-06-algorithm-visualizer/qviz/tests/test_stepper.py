@@ -187,20 +187,54 @@ class TestGrover:
         assert res.circuit.probabilities().get("01", 0) > 0.99
 
     def test_finds_asymmetric_marked_state_other_direction(self):
-        """'01' and '10' are bit-reversals of each other -- catches the
-        label-orientation bug that a palindromic target would hide."""
+        """'01' and '10' are bit-reversals of each other."""
         res = grover("10")
         assert res.circuit.probabilities().get("10", 0) > 0.99
+
+    def test_all_marked_states_are_found(self):
+        for state in ("00", "01", "10", "11"):
+            res = grover(state)
+            probs = res.circuit.probabilities()
+            assert probs.get(state, 0) > 0.99
+
+    def test_multiple_iterations_still_returns_valid_distribution(self):
+        res = grover("11", iterations=2)
+        probs = res.circuit.probabilities()
+        assert abs(sum(probs.values()) - 1.0) < 1e-9
+
+    def test_probability_distribution_is_normalized(self):
+        res = grover("11")
+        probs = res.circuit.probabilities()
+        assert abs(sum(probs.values()) - 1.0) < 1e-12
+
+    def test_iteration_count_is_reported(self):
+        res = grover("11", iterations=2)
+        assert res.info["Iterations"] == "2"
+
+    def test_search_register_definition(self):
+        res = grover("11")
+        assert res.registers["search"] == [0, 1]
 
     def test_summary_reports_found(self):
         res = grover("10")
         steps = step_through(res.circuit)
         assert "FOUND" in res.summary(steps[-1])
 
-    def test_invalid_marked_state_raises(self):
-        with pytest.raises(ValueError):
-            grover("111")  # 3 bits, not supported in v1
+    def test_outcome_matches_marked_state(self):
+        res = grover("01")
+        steps = step_through(res.circuit)
+        outcome = res.execution_summary(steps[-1])
 
+        assert outcome.success
+        assert outcome.expected == "01"
+
+    @pytest.mark.parametrize(
+        "state",
+        ["", "0", "1", "000", "abc", "12", "2", "111"],
+    )
+    def test_invalid_marked_states_raise(self, state):
+        with pytest.raises(ValueError):
+            grover(state)
 
 class TestQFT:
     def test_annotation_count_matches_gate_count(self):
