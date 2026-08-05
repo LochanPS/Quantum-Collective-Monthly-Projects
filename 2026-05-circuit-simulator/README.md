@@ -1,4 +1,4 @@
-# May 2026 — Quantum Circuit Simulator
+# June 2026 — Quantum Circuit Simulator
 
 **[→ Reference Implementation](qcsim/README.md)** · **[→ Circuit Library](circuit-library/README.md)** · **[→ Submit Solution](https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/discussions/categories/submissions)**
 

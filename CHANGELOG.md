@@ -7,6 +7,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Unreleased]
 
+### Added — `qnoise` (Monthly Project #3, August 2026)
+- `2026-08-noise-simulator/qnoise/` — density-matrix noise simulator, depends on `qcsim`
+- `DensityMatrix` — 2^N×2^N density matrix; probabilities, purity, validity (Hermitian/trace/PSD)
+- Noise engine — replays a qcsim gate log onto ρ: `rho -> U rho U†` per gate, `rho -> Σ K rho K†` per channel
+  - Noise-off parity: reproduces qcsim's exact statevector result (tested)
+  - Full-system gate unitaries sourced from qcsim (no re-derivation); RESET handled as a Kraus channel
+- Noise channels (Kraus): `Depolarizing`, `AmplitudeDamping` (T1), `PhaseDamping` (T2), `BitFlip`, `PhaseFlip`
+- `NoiseModel` — attach channels per gate; presets `ideal`, `light`, `depolarizing`, `ibm_ish`, `ion_ish`
+- Measurement — `sample()` from ρ diagonal, with per-qubit `ReadoutError`
+- Metrics — state `fidelity`, `trace_distance`, `tvd`
+- Side-by-side ideal-vs-noisy ASCII histograms (`render.compare`)
+- `qnoise-run` interactive CLI + `demos.py` (Bell, GHZ, Grover, ...) + noise sweep
+- 84 passing tests; docs set (Architecture, Channel-Development, API-Reference, Roadmap, Contributing, FAQ)
+
 ---
 
 ## [0.2.0] — 2026-06-01

@@ -13,7 +13,7 @@ Build real quantum tools. Learn by shipping.
 ```
 Quantum-Collective-Monthly-Projects/
 │
-├── 2026-05-circuit-simulator/               ← May 2026: Quantum Circuit Simulator (LIVE)
+├── 2026-05-circuit-simulator/               ← June 2026: Quantum Circuit Simulator (LIVE)
 │   ├── qcsim/                               ← Full reference implementation
 │   │   ├── qcsim/                          ← Core simulator source code
 │   │   ├── examples/                       ← Runnable examples (Bell, GHZ, Grover, etc.)
@@ -31,6 +31,14 @@ Quantum-Collective-Monthly-Projects/
 ├── 2026-06-algorithm-visualizer/            ← July 2026: Quantum Algorithm Visualizer (LIVE)
 │   └── qviz/                                ← Reference implementation (depends on qcsim)
 │
+├── 2026-08-noise-simulator/                 ← August 2026: Noisy Quantum Simulator (LIVE)
+│   ├── qnoise/                              ← Reference implementation (depends on qcsim)
+│   │   ├── qnoise/                         ← Engine: density matrix, channels, model, metrics
+│   │   ├── examples/                       ← Runnable examples (noisy Bell, sweep, custom model)
+│   │   ├── tests/                          ← 84 tests (incl. noise-off parity with qcsim)
+│   │   └── docs/                           ← Architecture, Channel-Development, Roadmap, API
+│   └── README.md                           ← Challenge description + what to build
+│
 ├── docs/
 │   └── FAQ.md                              ← Frequently asked questions
 │
@@ -44,7 +52,7 @@ Quantum-Collective-Monthly-Projects/
 
 ## 🚀 What's Live Now
 
-### May 2026 — Quantum Circuit Simulator
+### June 2026 — Quantum Circuit Simulator
 
 A full quantum circuit simulator with an interactive visual builder and community circuit library.
 
@@ -120,12 +128,49 @@ pip install -e .                                        # refresh qviz
 
 ---
 
+### August 2026 — Noisy Quantum Simulator
+
+Take any circuit and see what it *actually* does on a real, imperfect quantum
+device. Built on top of `qcsim` (imports it as a library), terminal-only. Where
+qcsim gives a perfect Bell state, `qnoise` evolves it as a **density matrix**
+and applies realistic hardware noise — showing the gap between ideal and real
+that quantum error correction exists to close.
+
+**Try it now:**
+```bash
+git clone https://github.com/LochanPS/Quantum-Collective-Monthly-Projects.git
+cd Quantum-Collective-Monthly-Projects/2026-08-noise-simulator/qnoise
+pip install -e ../../2026-05-circuit-simulator/qcsim   # install qcsim first
+pip install -e . && qnoise-run
+```
+
+**What's inside:**
+| Feature | Description |
+|---------|-------------|
+| 🎛️ Density-matrix engine | Evolves ρ: `ρ→UρU†` per gate, `ρ→ΣKρK†` per noise channel |
+| 🌫️ 5 noise channels | Depolarizing, amplitude damping (T1), phase damping (T2), bit-flip, phase-flip |
+| 🏭 Hardware presets | `ibm_ish`, `ion_ish`, `light` + custom `NoiseModel` builder |
+| 📉 Readout error | Classical measurement error, per-qubit rates |
+| 📊 Ideal vs noisy | Side-by-side ASCII histograms + fidelity / trace distance / TVD |
+| 🔬 Noise sweep | Fidelity-vs-rate decay curve, built into the CLI |
+| ✅ Parity guarantee | With noise off, reproduces qcsim's exact result — 84 passing tests |
+
+**Jump straight to:**
+- **[→ Challenge description](2026-08-noise-simulator/README.md)** — what to build + minimum requirements
+- **[→ Package README](2026-08-noise-simulator/qnoise/README.md)** — usage, API, quick start
+- **[→ Documentation index](2026-08-noise-simulator/qnoise/docs/README.md)** — architecture, guides
+- **[→ Roadmap](2026-08-noise-simulator/qnoise/docs/Roadmap.md)** — Beginner → Expert contribution ideas
+- **[→ Add a noise channel](2026-08-noise-simulator/qnoise/docs/Channel-Development.md)** — easiest first contribution
+
+---
+
 ## 📅 Challenges
 
 | Month | Challenge | Status | Folder |
 |-------|-----------|--------|--------|
-| May 2026 | Quantum Circuit Simulator | ✅ Live | [`2026-05-circuit-simulator/`](2026-05-circuit-simulator/) |
+| June 2026 | Quantum Circuit Simulator | ✅ Live | [`2026-05-circuit-simulator/`](2026-05-circuit-simulator/) |
 | July 2026 | Quantum Algorithm Visualizer | ✅ Live | [`2026-06-algorithm-visualizer/`](2026-06-algorithm-visualizer/) |
+| August 2026 | Noisy Quantum Simulator | ✅ Live | [`2026-08-noise-simulator/`](2026-08-noise-simulator/) |
 
 ---
 

@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qnoise"
+version = "0.1.0"
+description = "Noisy quantum circuit simulator — Quantum Collective Monthly Project #3"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "Apache-2.0"}
+authors = [{name = "Quantum Collective"}]
+keywords = ["quantum", "noise", "density-matrix", "decoherence", "simulator"]
+dependencies = ["numpy>=1.24", "qcsim>=0.1.0"]
+
+[project.urls]
+Homepage = "https://github.com/LochanPS/Quantum-Collective-Monthly-Projects"
+Repository = "https://github.com/LochanPS/Quantum-Collective-Monthly-Projects"
+Documentation = "https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/tree/main/2026-08-noise-simulator/qnoise"
+"Bug Tracker" = "https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/issues"
+Changelog = "https://github.com/LochanPS/Quantum-Collective-Monthly-Projects/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-cov"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[project.scripts]
+qnoise-run = "qnoise.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["qnoise*"]

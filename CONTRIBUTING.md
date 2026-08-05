@@ -26,7 +26,7 @@ my-solution/
 
 Go to [Discussions → Submissions](../../discussions/categories/submissions) and open a new post:
 
-**Title:** `[May 2026] Beginner — <your username>`
+**Title:** `[June 2026] Beginner — <your username>`
 
 **Body:**
 - Link to your fork (or specific folder/branch)
