@@ -110,10 +110,10 @@ def sweep_report(
 # --------------------------------------------------------------------------- #
 
 def _prompt(msg: str, default: str) -> str:
-    try:
-        raw = input(f"{msg} [{default}]: ").strip()
-    except EOFError:
-        return default
+    # NOTE: EOF (no more input, e.g. piped/closed stdin) propagates so the main
+    # loop exits cleanly. Returning the default here would loop forever on the
+    # "another run? [y]" prompt.
+    raw = input(f"{msg} [{default}]: ").strip()
     return raw or default
 
 

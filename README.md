@@ -50,6 +50,21 @@ Quantum-Collective-Monthly-Projects/
 
 ---
 
+## 🎛️ One hub for all three tools
+
+Prefer a single launcher? From the repo root:
+
+```bash
+python hub.py
+```
+
+Pick a product from the menu, use it, and land back at the menu when it exits —
+navigate between the circuit simulator, algorithm visualizer, and noise
+simulator without remembering three separate commands. The hub shows which tools
+are installed and prints the install steps for any that aren't.
+
+---
+
 ## 🚀 What's Live Now
 
 ### June 2026 — Quantum Circuit Simulator
