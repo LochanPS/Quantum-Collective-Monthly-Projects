@@ -230,20 +230,21 @@
         <p class="caption after">After <span class="tag">— framed &amp; colored</span></p>
         <div class="term">
           <div class="term-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="term-title">qnoise-run</span></div>
-<pre><span class="frame">╭──</span><span class="cy b"> IDEAL vs NOISY </span><span class="frame">────────────────────────────╮</span>
-<span class="frame">│</span>  <span class="gy">st</span>   <span class="cy b">ideal</span>              <span class="wh">noisy</span>            <span class="frame">│</span>
-<span class="frame">│</span> <span class="gy">────────────────────────────────────────</span> <span class="frame">│</span>
-<span class="frame">│</span> <span class="b">00</span>  <span class="cy">████████</span>        <span class="gy">50.0%</span>  <span class="gr">███████▉</span>   <span class="gr">49.6%</span>   <span class="frame">│</span>
-<span class="frame">│</span> <span class="b">01</span>                  <span class="gy">0.0%</span>  <span class="rd">▏</span>          <span class="rd">0.5%</span> <span class="rd">●</span> <span class="frame">│</span>
-<span class="frame">│</span> <span class="b">10</span>                  <span class="gy">0.0%</span>  <span class="rd">▏</span>          <span class="rd">0.5%</span> <span class="rd">●</span> <span class="frame">│</span>
-<span class="frame">│</span> <span class="b">11</span>  <span class="cy">████████</span>        <span class="gy">50.0%</span>  <span class="gr">███████▉</span>   <span class="gr">49.4%</span>   <span class="frame">│</span>
-<span class="frame">╰────────────────────────────────────────────╯</span>
+<pre><span class="frame">╭──</span><span class="cy b"> IDEAL vs NOISY </span><span class="frame">────────────────────────────────────────╮</span>
+<span class="frame">│</span>  <span class="gy">st</span>   <span class="cy b">ideal</span>              <span class="wh">noisy</span>                           <span class="frame">│</span>
+<span class="frame">│</span> <span class="gy">────────────────────────────────────────────────────────</span> <span class="frame">│</span>
+<span class="frame">│</span> <span class="b">00</span>  <span class="cy">████████        </span> <span class="gy">50.0% </span>   <span class="gr">███████▉        </span> <span class="gr">49.6% </span>    <span class="frame">│</span>
+<span class="frame">│</span> <span class="b">01</span>  <span class="cy">                </span> <span class="gy">0.0%  </span>   <span class="rd">▏               </span> <span class="rd">0.5%  </span><span class="rd"> ●</span>  <span class="frame">│</span>
+<span class="frame">│</span> <span class="b">10</span>  <span class="cy">                </span> <span class="gy">0.0%  </span>   <span class="rd">▏               </span> <span class="rd">0.5%  </span><span class="rd"> ●</span>  <span class="frame">│</span>
+<span class="frame">│</span> <span class="b">11</span>  <span class="cy">████████        </span> <span class="gy">50.0% </span>   <span class="gr">███████▉        </span> <span class="gr">49.4% </span>    <span class="frame">│</span>
+<span class="frame">╰──────────────────────────────────────────────────────────╯</span>
 
-<span class="frame">╭──</span><span class="mg b"> DRIFT FROM IDEAL </span><span class="frame">──────────────────────────╮</span>
-<span class="frame">│</span> <span class="b">fidelity</span>  <span class="gr">███████████████████████▋</span> <span class="gr">0.984</span> <span class="gr">(excellent)</span> <span class="frame">│</span>
-<span class="frame">│</span> <span class="gy">trace distance</span> 0.016   <span class="gy">TVD</span> 0.010            <span class="frame">│</span>
-<span class="frame">│</span> <span class="gy">purity</span> 1.000 <span class="v">→</span> <span class="mg">0.968</span>                        <span class="frame">│</span>
-<span class="frame">╰────────────────────────────────────────────╯</span></pre>
+<span class="frame">╭──</span><span class="mg b"> DRIFT FROM IDEAL </span><span class="frame">──────────────────────────────────────╮</span>
+<span class="frame">│</span> <span class="b">fidelity</span>  <span class="gr">███████████████████████▉</span> <span class="gr">0.984</span>  <span class="gr">(excellent)</span>    <span class="frame">│</span>
+<span class="frame">│</span>                                                          <span class="frame">│</span>
+<span class="frame">│</span> <span class="gy">trace distance</span>  0.016     <span class="gy">TVD</span>  0.010                     <span class="frame">│</span>
+<span class="frame">│</span> <span class="gy">purity</span>  1.000 <span class="v">→</span> <span class="mg">0.968</span>   (1.000 pure  0.250 fully mixed)  <span class="frame">│</span>
+<span class="frame">╰──────────────────────────────────────────────────────────╯</span></pre>
         </div>
       </div>
     </div>
@@ -261,21 +262,21 @@
 <span class="v b"> \__, |_| |_|\___/ |_|___/\___|</span>
 <span class="v b"> |_|</span>
 
-<span class="frame">╭──</span><span class="v b"> SAMPLED · 1024 shots · readout error on </span><span class="frame">─────╮</span>
-<span class="frame">│</span> <span class="b">00</span>  <span class="v">██████████▊</span>            <span class="wh">500</span>            <span class="frame">│</span>
-<span class="frame">│</span> <span class="b">01</span>  <span class="v">▍</span>                       <span class="wh">19</span>            <span class="frame">│</span>
-<span class="frame">│</span> <span class="b">10</span>  <span class="v">▍</span>                       <span class="wh">16</span>            <span class="frame">│</span>
-<span class="frame">│</span> <span class="b">11</span>  <span class="v">██████████▌</span>            <span class="wh">489</span>            <span class="frame">│</span>
-<span class="frame">╰────────────────────────────────────────────╯</span>
+<span class="frame">╭──</span><span class="v b"> SAMPLED · 1024 shots · readout error on </span><span class="frame">───────────────╮</span>
+<span class="frame">│</span> <span class="b">00</span>  <span class="v">██████████▊           </span> <span class="wh">  500</span>                         <span class="frame">│</span>
+<span class="frame">│</span> <span class="b">01</span>  <span class="v">▍                     </span> <span class="wh">   19</span>                         <span class="frame">│</span>
+<span class="frame">│</span> <span class="b">10</span>  <span class="v">▍                     </span> <span class="wh">   16</span>                         <span class="frame">│</span>
+<span class="frame">│</span> <span class="b">11</span>  <span class="v">██████████▌           </span> <span class="wh">  489</span>                         <span class="frame">│</span>
+<span class="frame">╰──────────────────────────────────────────────────────────╯</span>
 
 <span class="frame">╭──</span><span class="og b"> DEPOLARIZING SWEEP </span><span class="frame">──────────────────╮</span>
 <span class="frame">│</span> <span class="gy b">rate</span>   <span class="gy b">fidelity</span>   <span class="gy b">decay curve</span>          <span class="frame">│</span>
 <span class="frame">│</span> 0.000   <span class="gr">1.000</span>   <span class="gr">██████████████████████</span> <span class="frame">│</span>
-<span class="frame">│</span> 0.050   <span class="gr">0.904</span>   <span class="gr">███████████████████▉</span>   <span class="frame">│</span>
-<span class="frame">│</span> 0.100   <span class="yl">0.817</span>   <span class="yl">██████████████████</span>     <span class="frame">│</span>
-<span class="frame">│</span> 0.200   <span class="rd">0.666</span>   <span class="rd">██████████████▋</span>        <span class="frame">│</span>
-<span class="frame">│</span> 0.400   <span class="rd">0.448</span>   <span class="rd">█████████▉</span>             <span class="frame">│</span>
-<span class="frame">╰────────────────────────────────────────────╯</span></pre>
+<span class="frame">│</span> 0.050   <span class="gr">0.904</span>   <span class="gr">███████████████████▉  </span> <span class="frame">│</span>
+<span class="frame">│</span> 0.100   <span class="yl">0.817</span>   <span class="yl">██████████████████    </span> <span class="frame">│</span>
+<span class="frame">│</span> 0.200   <span class="rd">0.666</span>   <span class="rd">██████████████▉       </span> <span class="frame">│</span>
+<span class="frame">│</span> 0.400   <span class="rd">0.448</span>   <span class="rd">█████████▉            </span> <span class="frame">│</span>
+<span class="frame">╰────────────────────────────────────────╯</span></pre>
     </div>
   </section>
 

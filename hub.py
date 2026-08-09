@@ -166,7 +166,6 @@ def _visible_len(text: str) -> int:
 
 
 def render_menu() -> None:
-    print()
     for line in BANNER_ART.splitlines():
         print(c(line, "violet", "bold"))
     print(c("              Monthly Projects  ·  terminal product hub", "grey"))
