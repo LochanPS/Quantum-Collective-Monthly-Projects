@@ -15,8 +15,54 @@ instead of launching.
 from __future__ import annotations
 
 import importlib.util
+import os
 import subprocess
 import sys
+
+
+# --------------------------------------------------------------------------- #
+#  minimal self-contained styling (no dependency on any product package)
+# --------------------------------------------------------------------------- #
+
+def _enable_windows_vt() -> bool:
+    if os.name != "nt":
+        return True
+    try:
+        import ctypes
+
+        k = ctypes.windll.kernel32
+        h = k.GetStdHandle(-11)
+        m = ctypes.c_uint()
+        if not k.GetConsoleMode(h, ctypes.byref(m)):
+            return False
+        return bool(k.SetConsoleMode(h, m.value | 0x0004))
+    except Exception:
+        return False
+
+
+def _color_on() -> bool:
+    if os.environ.get("NO_COLOR") is not None:
+        return False
+    if os.environ.get("FORCE_COLOR") is not None:
+        return _enable_windows_vt()
+    if not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
+        return False
+    return _enable_windows_vt()
+
+
+_COLOR = _color_on()
+_CODES = {
+    "reset": "\033[0m", "bold": "\033[1m", "dim": "\033[2m",
+    "green": "\033[38;5;114m", "red": "\033[38;5;203m", "cyan": "\033[38;5;80m",
+    "violet": "\033[38;5;141m", "grey": "\033[38;5;245m", "white": "\033[38;5;255m",
+    "yellow": "\033[38;5;221m",
+}
+
+
+def c(text: str, *styles: str) -> str:
+    if not _COLOR or not styles:
+        return text
+    return "".join(_CODES.get(s, "") for s in styles) + text + _CODES["reset"]
 
 # Base directory of this repo (folder containing this file).
 try:
@@ -58,7 +104,7 @@ PRODUCTS = [
     Product(
         "1",
         "Circuit Simulator  (qcsim)",
-        "Build quantum circuits visually — May's foundation. Project #1",
+        "Build quantum circuits visually. The foundation · Project #1",
         "qcsim",
         "qcsim.tui:main",
         f"{QCSIM_PATH}",
@@ -66,7 +112,7 @@ PRODUCTS = [
     Product(
         "2",
         "Algorithm Visualizer  (qviz)",
-        "Step through algorithms gate-by-gate — watch the state evolve. Project #2",
+        "Step through algorithms, watch the state evolve · Project #2",
         "qviz",
         "qviz.cli:main",
         "2026-06-algorithm-visualizer/qviz",
@@ -93,31 +139,53 @@ def _can_unicode() -> bool:
 
 
 _U = _can_unicode()
-_OK = "✓" if _U else "[installed]"
-_NO = "✗" if _U else "[not installed]"
+_OK = c("● ready", "green") if _U else "[installed]"
+_NO = c("○ not installed", "grey") if _U else "[not installed]"
 _LINE = "─" if _U else "-"
+_TL, _TR, _BL, _BR = ("╭", "╮", "╰", "╯") if _U else ("+", "+", "+", "+")
+_H, _V = (_LINE, "│") if _U else ("-", "|")
 
 
-BANNER = r"""
-  ___                 _                   ___     _ _         _   _
+BANNER_ART = r"""  ___                 _                   ___     _ _         _   _
  / _ \ _  _ __ _ _ _ | |_ _  _ _ __      / __|___| | |___ __ | |_(_)_ _____
 | (_) | || / _` | ' \|  _| || | '  \    | (__/ _ \ | / -_) _|| |  _| \ V / -_)
- \__\_\\_,_\__,_|_||_|\__|\_,_|_|_|_|    \___\___/_|_\___\__||_|\__|_|\_/\___|
+ \__\_\\_,_\__,_|_||_|\__|\_,_|_|_|_|    \___\___/_|_\___\__||_|\__|_|\_/\___|"""
 
-              Monthly Projects — terminal product hub
-"""
+
+def _visible_len(text: str) -> int:
+    out, i = 0, 0
+    while i < len(text):
+        if text[i] == "\033":
+            j = text.find("m", i)
+            if j != -1:
+                i = j + 1
+                continue
+        out += 1
+        i += 1
+    return out
 
 
 def render_menu() -> None:
-    print(BANNER)
-    print("  " + _LINE * 66)
+    print()
+    for line in BANNER_ART.splitlines():
+        print(c(line, "violet", "bold"))
+    print(c("              Monthly Projects  ·  terminal product hub", "grey"))
+    print()
+    width = 68
+    print(c(_TL + _H * width + _TR, "grey"))
     for p in PRODUCTS:
         status = _OK if p.installed() else _NO
-        print(f"   {p.key}.  {p.name:<32} {status}")
-        print(f"       {p.tagline}")
-    print()
-    print("   q.  quit")
-    print("  " + _LINE * 66)
+        head = f" {c(p.key + '.', 'cyan', 'bold')}  {c(p.name, 'white', 'bold')}"
+        pad = width - _visible_len(head) - _visible_len(status) - 1
+        print(c(_V, "grey") + head + " " * max(1, pad) + status + " " + c(_V, "grey"))
+        tagtext = p.tagline
+        if len(tagtext) > width - 6:
+            tagtext = tagtext[: width - 9] + "..."
+        tag = f"     {c(tagtext, 'dim', 'grey')}"
+        print(c(_V, "grey") + tag + " " * max(0, width - _visible_len(tag)) + c(_V, "grey"))
+    quitline = f" {c('q.', 'red', 'bold')}  {c('quit', 'grey')}"
+    print(c(_V, "grey") + quitline + " " * max(0, width - _visible_len(quitline)) + c(_V, "grey"))
+    print(c(_BL + _H * width + _BR, "grey"))
 
 
 def handle(choice: str) -> bool:

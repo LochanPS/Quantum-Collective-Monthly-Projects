@@ -11,30 +11,32 @@ from qnoise.demos import DEMOS
 def test_every_demo_builds_and_reports(name):
     qc = build_circuit(name)
     report = run_report(qc, presets.light(), shots=256, seed=0)
-    assert "ideal" in report and "noisy" in report
-    assert "fidelity vs ideal" in report
-    assert "sampled measurement" in report
+    # The three framed panels are present.
+    assert "IDEAL vs NOISY" in report
+    assert "fidelity" in report
+    assert "SAMPLED" in report
 
 
 def test_ideal_model_report_has_unit_fidelity():
     qc = build_circuit("bell")
     report = run_report(qc, presets.ideal(), shots=128, seed=0)
-    assert "fidelity vs ideal: 1.000" in report
+    # Zero noise -> perfect fidelity, flagged excellent.
+    assert "1.000" in report
+    assert "excellent" in report
 
 
 def test_readout_error_mentioned_when_present():
     qc = build_circuit("plus")
     report = run_report(qc, presets.ibm_ish(), shots=256, seed=0)
-    assert "with readout error" in report
+    assert "readout error" in report
 
 
 def test_sweep_report_monotonic_fidelity_text():
     qc = build_circuit("bell")
     report = sweep_report(qc, [0.0, 0.1, 0.4])
-    assert "fidelity vs rate" in report
-    # rate 0.000 gives fidelity 1.000
-    assert "0.000" in report and "1.000" in report
-    first_row = [l for l in report.splitlines() if l.strip().startswith("0.000")][0]
+    assert "SWEEP" in report
+    # rate 0.000 gives fidelity 1.000 (row is inside a frame, so match by content)
+    first_row = [l for l in report.splitlines() if "0.000" in l][0]
     assert "1.000" in first_row
 
 
