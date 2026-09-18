@@ -985,6 +985,7 @@ class QuantumCircuit:
             "Ry": lambda: self.ry(qubits[0], p["theta"]),
             "Rz": lambda: self.rz(qubits[0], p["theta"]),
             "P": lambda: self.p(qubits[0], p["lam"]),
+            "U": lambda: self.u(qubits[0], p["theta"], p["phi"], p["lam"]),
             "CNOT": lambda: self.cnot(qubits[0], qubits[1]),
             "CY": lambda: self.cy(qubits[0], qubits[1]),
             "CZ": lambda: self.cz(qubits[0], qubits[1]),
