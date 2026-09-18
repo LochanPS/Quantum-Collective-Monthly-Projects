@@ -482,6 +482,16 @@ class TestCircuitOps:
 
         assert np.allclose(qc_full.statevector(), qc_a.statevector())
 
+    def test_compose_replays_u_gate(self):
+        qc_u = QuantumCircuit(1)
+        qc_u.u(0, np.pi / 2, 0, np.pi)
+
+        combo = QuantumCircuit(1)
+        combo.compose(qc_u)
+
+        assert np.allclose(combo.statevector(), qc_u.statevector())
+        assert combo == qc_u
+
     def test_equality_same_gates(self):
         qc1 = QuantumCircuit(2)
         qc1.h(0).cnot(0, 1)

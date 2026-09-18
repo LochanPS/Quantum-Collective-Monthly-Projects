@@ -37,6 +37,12 @@ class TestStepper:
         steps = step_through(qc)
         assert np.allclose(steps[-1].statevector, qc.statevector())
 
+    def test_u_gate_is_replayed(self):
+        qc = QuantumCircuit(1)
+        qc.u(0, np.pi / 2, 0, np.pi)
+        steps = step_through(qc)
+        assert np.allclose(steps[-1].statevector, qc.statevector())
+
     def test_intermediate_step_is_not_final_state(self):
         qc = QuantumCircuit(2)
         qc.h(0).cnot(0, 1)
