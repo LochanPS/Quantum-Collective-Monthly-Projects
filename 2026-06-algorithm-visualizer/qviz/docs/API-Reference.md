@@ -112,6 +112,7 @@ deutsch_jozsa(num_input_qubits=2, oracle="balanced") -> AlgorithmResult
 bernstein_vazirani(secret: str) -> AlgorithmResult
 grover(marked_state="11", iterations=None) -> AlgorithmResult   # 2 qubits, v1
 qft_algorithm(num_qubits=3, initial_state=None) -> AlgorithmResult
+superdense_coding(message="10") -> AlgorithmResult               # 2 qubits
 ```
 
 ## `qviz.cli`
