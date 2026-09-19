@@ -42,6 +42,7 @@ All are single-qubit; `.kraus()` returns a list of 2×2 arrays.
 | `PhaseFlip(p)` | `p` | Apply Z with probability `p`. |
 | `AmplitudeDamping(gamma)` | `γ` | T1 energy decay `|1> -> |0>`. |
 | `PhaseDamping(gamma)` | `γ` | T2 dephasing (phase loss, no energy loss). |
+| `CoherentOverRotation(epsilon, axis="x")` | `ε` (radians), axis `x`/`y`/`z` | Unitary error: extra rotation `R_axis(ε)` each time it fires. State stays pure; errors add coherently. |
 | `NoiseChannel` | — | Base class. Implement `.kraus()`. `.is_trace_preserving()` checks completeness. |
 
 ## NoiseModel & presets (`qnoise.model`, exposed as `qnoise.presets`)

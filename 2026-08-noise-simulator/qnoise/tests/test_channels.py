@@ -6,6 +6,7 @@ import pytest
 from qnoise import (
     AmplitudeDamping,
     BitFlip,
+    CoherentOverRotation,
     Depolarizing,
     DensityMatrix,
     PhaseDamping,
@@ -21,6 +22,8 @@ ALL_CHANNELS = [
     PhaseFlip(0.3),
     AmplitudeDamping(0.4),
     PhaseDamping(0.4),
+    CoherentOverRotation(0.1),
+    CoherentOverRotation(-0.3, axis="z"),
 ]
 
 
@@ -63,6 +66,40 @@ def test_amplitude_damping_gamma1_relaxes_to_ground():
     expected = np.zeros((2, 2), dtype=complex)
     expected[0, 0] = 1.0
     assert np.allclose(dm.matrix(), expected)
+
+
+def test_over_rotation_about_x_moves_population():
+    # R_x(eps)|0>: P(1) = sin^2(eps / 2).
+    eps = 0.4
+    dm = DensityMatrix.from_statevector(np.array([1, 0], dtype=complex))
+    apply_channel(dm, CoherentOverRotation(eps, axis="x"), 0)
+    assert dm.probabilities()[1] == pytest.approx(np.sin(eps / 2) ** 2)
+    assert dm.purity() == pytest.approx(1.0)
+
+
+def test_over_rotation_errors_add_coherently():
+    # n small over-rotations = one rotation by n * eps (no mixing in between).
+    eps, n = 0.05, 10
+    dm = DensityMatrix.from_statevector(np.array([1, 0], dtype=complex))
+    for _ in range(n):
+        apply_channel(dm, CoherentOverRotation(eps, axis="y"), 0)
+    assert dm.probabilities()[1] == pytest.approx(np.sin(n * eps / 2) ** 2)
+    assert dm.purity() == pytest.approx(1.0)
+
+
+def test_over_rotation_about_z_leaves_populations():
+    plus = np.array([1, 1], dtype=complex) / np.sqrt(2)
+    dm = DensityMatrix.from_statevector(plus)
+    apply_channel(dm, CoherentOverRotation(0.7, axis="z"), 0)
+    assert np.allclose(dm.probabilities(), [0.5, 0.5])
+    # Off-diagonal keeps its magnitude but picks up a phase.
+    assert abs(dm.matrix()[0, 1]) == pytest.approx(0.5)
+    assert np.angle(dm.matrix()[1, 0]) == pytest.approx(0.7)
+
+
+def test_over_rotation_rejects_unknown_axis():
+    with pytest.raises(ValueError):
+        CoherentOverRotation(0.1, axis="w")
 
 
 def test_bit_flip_full_flips_population():

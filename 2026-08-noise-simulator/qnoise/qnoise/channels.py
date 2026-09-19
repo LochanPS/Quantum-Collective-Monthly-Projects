@@ -152,3 +152,34 @@ class PhaseDamping(NoiseChannel):
         k0 = np.array([[1, 0], [0, np.sqrt(1 - g)]], dtype=complex)
         k1 = np.array([[0, 0], [0, np.sqrt(g)]], dtype=complex)
         return [k0, k1]
+
+
+class CoherentOverRotation(NoiseChannel):
+    """Coherent over-rotation: every time it fires, the qubit is rotated by a
+    small extra angle ``epsilon`` about ``axis`` (a miscalibrated gate).
+
+    This is a *unitary* error, so it has a single Kraus operator:
+        K0 = R_axis(epsilon) = exp(-i * epsilon * sigma_axis / 2)
+
+    Unlike the stochastic channels above, it never mixes the state (purity
+    stays 1). Its errors add up coherently: n applications rotate by
+    ``n * epsilon``, so infidelity grows roughly like n^2 instead of n.
+    """
+
+    name = "coherent_over_rotation"
+
+    _PAULI = {"x": _X, "y": _Y, "z": _Z}
+
+    def __init__(self, epsilon: float, axis: str = "x") -> None:
+        axis = axis.lower()
+        if axis not in self._PAULI:
+            raise ValueError(f"axis must be 'x', 'y' or 'z', got {axis!r}")
+        self.epsilon = float(epsilon)
+        self.axis = axis
+
+    def kraus(self) -> List[np.ndarray]:
+        half = self.epsilon / 2
+        return [np.cos(half) * _I - 1j * np.sin(half) * self._PAULI[self.axis]]
+
+    def __repr__(self) -> str:
+        return f"CoherentOverRotation(epsilon={self.epsilon}, axis={self.axis!r})"
