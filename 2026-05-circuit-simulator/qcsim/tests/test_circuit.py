@@ -5,6 +5,8 @@ Run with: pytest tests/ -v
 
 from __future__ import annotations
 
+import itertools
+
 import numpy as np
 import pytest
 
@@ -341,6 +343,23 @@ class TestToffoli:
         qc.x(2).toffoli(1, 2, 0)  # ctrl1=0 → no flip
         probs = qc.probabilities()
         assert abs(probs.get("100", 0) - 1.0) < 1e-10
+
+    def test_tensor_backend_higher_control_first(self):
+        """Controls listed high-to-low, target below both."""
+        qc = QuantumCircuit(3, backend="tensor")
+        qc.x(1).x(2).toffoli(2, 1, 0)
+        assert abs(qc.probabilities().get("111", 0) - 1.0) < 1e-10
+
+    @pytest.mark.parametrize("ctrl0,ctrl1,target", itertools.permutations(range(4), 3))
+    def test_tensor_backend_matches_kronecker(self, ctrl0, ctrl1, target):
+        states = []
+        for backend in ("kronecker", "tensor"):
+            qc = QuantumCircuit(4, backend=backend)
+            for q in range(4):
+                qc.ry(q, 0.3 + 0.4 * q)  # distinct amplitudes on every axis
+            qc.toffoli(ctrl0, ctrl1, target)
+            states.append(qc.statevector())
+        assert np.allclose(states[0], states[1])
 
 
 # ================================================================== #
