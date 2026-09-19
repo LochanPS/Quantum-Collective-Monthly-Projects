@@ -1,7 +1,9 @@
 """Noise models — bundle channels and attach them to gates.
 
 A :class:`NoiseModel` maps gate names to the noise channels that fire after
-those gates run. The engine consults it via :meth:`NoiseModel.channels_for`.
+those gates run. A channel can also be limited to certain qubits, which models a
+"bad qubit" whose error rate is higher than its neighbours'. The engine consults
+the model via :meth:`NoiseModel.channels_for`.
 
 Presets (:func:`ideal`, :func:`light`, :func:`depolarizing`) return ready-made
 models so a user can pick one instead of wiring channels by hand. Adding a
@@ -10,7 +12,7 @@ preset is a good first contribution.
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, FrozenSet, Iterable, List, Optional, Tuple
 
 from .channels import AmplitudeDamping, Depolarizing, NoiseChannel, PhaseDamping
 from .measure import ReadoutError
@@ -28,31 +30,53 @@ class NoiseModel:
     """A collection of noise channels attached to gate names."""
 
     def __init__(self) -> None:
-        self._by_gate: Dict[str, List[NoiseChannel]] = {}
+        # gate name -> [(channel, qubits it is limited to, or None for all)]
+        self._by_gate: Dict[str, List[Tuple[NoiseChannel, Optional[FrozenSet[int]]]]] = {}
         self.readout_error: Optional[ReadoutError] = None
 
     def add_channel(
         self,
         channel: NoiseChannel,
         gates: Optional[Iterable[str]] = None,
+        qubits: Optional[Iterable[int]] = None,
     ) -> "NoiseModel":
         """Attach ``channel`` to the given gate names (default: all gates).
 
         Args:
             channel: The noise channel to add.
             gates: Gate names it applies after. ``None`` means every gate.
+            qubits: Only fire on these qubits. ``None`` (default) means every
+                qubit the gate touches. For a two-qubit gate, the channel
+                fires on whichever of its qubits are in this set.
 
         Returns:
             ``self`` (chainable).
+
+        Raises:
+            ValueError: If ``qubits`` is given but empty, or has a negative index.
         """
         targets = list(gates) if gates is not None else list(_ALL_GATES)
+        only: Optional[FrozenSet[int]] = None
+        if qubits is not None:
+            only = frozenset(qubits)
+            if not only:
+                raise ValueError("qubits must name at least one qubit (or be None for all)")
+            if any(q < 0 for q in only):
+                raise ValueError(f"qubit indices must be non-negative, got {sorted(only)}")
         for g in targets:
-            self._by_gate.setdefault(g, []).append(channel)
+            self._by_gate.setdefault(g, []).append((channel, only))
         return self
 
-    def channels_for(self, gate_name: str) -> List[NoiseChannel]:
-        """Return the channels that fire after ``gate_name`` (possibly empty)."""
-        return self._by_gate.get(gate_name, [])
+    def channels_for(self, gate_name: str, qubit: Optional[int] = None) -> List[NoiseChannel]:
+        """Return the channels that fire after ``gate_name`` (possibly empty).
+
+        Args:
+            gate_name: Gate name as it appears in the qcsim log.
+            qubit: If given, only channels that fire on this qubit. If omitted,
+                every channel attached to the gate, whatever its qubits.
+        """
+        attached = self._by_gate.get(gate_name, [])
+        return [ch for ch, only in attached if qubit is None or only is None or qubit in only]
 
     def add_readout_error(
         self,
