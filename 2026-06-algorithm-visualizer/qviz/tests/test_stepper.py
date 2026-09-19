@@ -5,7 +5,13 @@ import pytest
 
 from qcsim import QuantumCircuit
 from qviz import step_through
-from qviz.algorithms import bernstein_vazirani, deutsch_jozsa, grover, qft_algorithm
+from qviz.algorithms import (
+    bernstein_vazirani,
+    deutsch_jozsa,
+    grover,
+    qft_algorithm,
+    superdense_coding,
+)
 from qviz.interpret import interpret_state, nonzero_states, phase_label
 from qviz.phases import current_segment_index, segments
 from qviz.render import (
@@ -202,6 +208,52 @@ class TestGrover:
             grover("111")  # 3 bits, not supported in v1
 
 
+class TestSuperdenseCoding:
+    @pytest.mark.parametrize("message", ["00", "01", "10", "11"])
+    def test_bob_decodes_every_message(self, message):
+        res = superdense_coding(message)
+        assert res.circuit.probabilities().get(message, 0) > 0.999
+
+    @pytest.mark.parametrize("message", ["00", "01", "10", "11"])
+    def test_outcome_reports_success(self, message):
+        res = superdense_coding(message)
+        steps = step_through(res.circuit)
+        verdict = res.execution_summary(steps[-1])
+        assert verdict.success
+        assert verdict.measured == message
+
+    def test_non_palindromic_messages_differ(self):
+        """'01' and '10' are bit-reversals, so this catches a swapped X/Z encoding."""
+        assert superdense_coding("01").circuit.probabilities().get("01", 0) > 0.999
+        assert superdense_coding("10").circuit.probabilities().get("10", 0) > 0.999
+
+    def test_annotation_count_matches_gate_count(self):
+        for message in ["00", "01", "10", "11"]:
+            res = superdense_coding(message)
+            assert len(res.annotations) == len(res.circuit._log)
+
+    def test_alice_only_touches_her_qubit_while_encoding(self):
+        res = superdense_coding("11")
+        encoding = [
+            qubits
+            for (_, qubits, _), phase in zip(res.circuit._log, res.phases)
+            if phase == "Encoding"
+        ]
+        assert encoding and all(q == [0] for q in encoding)
+
+    def test_shared_pair_is_entangled_before_encoding(self):
+        res = superdense_coding("10")
+        steps = step_through(res.circuit)
+        bell = steps[1].probabilities
+        assert bell.get("00", 0) == pytest.approx(0.5)
+        assert bell.get("11", 0) == pytest.approx(0.5)
+
+    @pytest.mark.parametrize("bad", ["", "1", "012", "ab"])
+    def test_invalid_message_raises(self, bad):
+        with pytest.raises(ValueError):
+            superdense_coding(bad)
+
+
 class TestQFT:
     def test_annotation_count_matches_gate_count(self):
         res = qft_algorithm(3, "101")
@@ -298,6 +350,7 @@ class TestPhasesAndOutcome:
             (bernstein_vazirani, ("100",)),
             (grover, ("10",)),
             (qft_algorithm, (3, "101")),
+            (superdense_coding, ("10",)),
         ]:
             res = build(*args)
             steps = step_through(res.circuit)
