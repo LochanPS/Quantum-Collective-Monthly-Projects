@@ -100,6 +100,15 @@ nm = (NoiseModel()
       .add_channel(Depolarizing(0.05), qubits=[2]))  # qubit 2 is much worse
 ```
 
+Sweep a noise strength and get the decay curve as data:
+
+```python
+from qnoise import Depolarizing, sweep
+
+for pt in sweep(qc, Depolarizing, [0.0, 0.01, 0.05, 0.1]):
+    print(pt.rate, pt.fidelity, pt.purity, pt.tvd)
+```
+
 ---
 
 ## What's inside
@@ -112,6 +121,7 @@ nm = (NoiseModel()
 | `model.py` | `NoiseModel` — attach channels per gate; hardware-ish presets |
 | `measure.py` | Sampling from ρ + classical readout error |
 | `metrics.py` | Fidelity, trace distance, total-variation distance |
+| `sweep.py` | `sweep()` — metrics across a range of noise rates, as data |
 | `render.py` | Side-by-side ideal-vs-noisy ASCII histograms |
 | `demos.py` | Demo circuits (Bell, GHZ, Grover, ...) |
 | `cli.py` | `qnoise-run` interactive front end |
