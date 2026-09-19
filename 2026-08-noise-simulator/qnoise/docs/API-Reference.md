@@ -76,6 +76,13 @@ All are single-qubit; `.kraus()` returns a list of 2×2 arrays.
 | `trace_distance(rho, sigma)` | `½·Σ|eig(rho-sigma)|` in `[0,1]`. |
 | `tvd(dist_a, dist_b)` | Total-variation distance of two probability dicts. |
 
+## Sweeps (`qnoise.sweep`)
+
+| Member | Description |
+|--------|-------------|
+| `sweep(qc, noise, rates)` | Run `qc` once per rate; returns a list of `SweepPoint`. `noise(rate)` may return a channel (attached after every gate) or a full `NoiseModel`. |
+| `SweepPoint` | Frozen dataclass: `rate`, `fidelity`, `trace_distance`, `tvd`, `purity` (all vs. the ideal run). |
+
 ## Rendering (`qnoise.render`)
 
 | Function | Description |
