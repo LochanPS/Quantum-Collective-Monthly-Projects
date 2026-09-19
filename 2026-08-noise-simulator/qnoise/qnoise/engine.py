@@ -155,9 +155,9 @@ def apply_channel(dm: DensityMatrix, channel: NoiseChannel, qubit: int) -> None:
 def run(qc: QuantumCircuit, noise_model=None) -> DensityMatrix:
     """Replay a circuit onto a density matrix, applying noise after each gate.
 
-    For each unitary gate: evolve ``rho -> U rho U^dagger``, then, for every
-    channel the noise model attaches to that gate, apply it to each qubit the
-    gate touched. A ``None`` (or ideal) noise model reproduces :func:`run_ideal`.
+    For each unitary gate: evolve ``rho -> U rho U^dagger``, then, for each qubit
+    the gate touched, apply every channel the noise model attaches to that gate
+    on that qubit. A ``None`` (or ideal) noise model reproduces :func:`run_ideal`.
 
     Args:
         qc: A qcsim circuit (its gate log is replayed).
@@ -176,8 +176,8 @@ def run(qc: QuantumCircuit, noise_model=None) -> DensityMatrix:
         U = gate_unitary(name, qubits, params, qc.num_qubits)
         dm.apply_unitary(U)
         if noise_model is not None:
-            for channel in noise_model.channels_for(name):
-                for q in qubits:
+            for q in qubits:
+                for channel in noise_model.channels_for(name, q):
                     apply_channel(dm, channel, q)
     return dm
 

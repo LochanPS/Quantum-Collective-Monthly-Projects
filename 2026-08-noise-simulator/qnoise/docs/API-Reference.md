@@ -49,9 +49,9 @@ All are single-qubit; `.kraus()` returns a list of 2×2 arrays.
 | Member | Description |
 |--------|-------------|
 | `NoiseModel()` | Empty model. |
-| `.add_channel(channel, gates=None)` | Attach a channel to given gate names (default: all). Chainable. |
+| `.add_channel(channel, gates=None, qubits=None)` | Attach a channel to given gate names (default: all), optionally only on some qubits (default: every qubit the gate touches). Chainable. |
 | `.add_readout_error(p1_given_0, p0_given_1)` | Attach classical readout error. Chainable. |
-| `.channels_for(gate_name)` | Channels firing after a gate. |
+| `.channels_for(gate_name, qubit=None)` | Channels firing after a gate; with `qubit`, only those that fire on that qubit. |
 | `.readout_error` | The attached `ReadoutError` or `None`. |
 | `presets.ideal()` | No noise. |
 | `presets.light()` | 1% depolarizing everywhere. |
