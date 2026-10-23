@@ -22,6 +22,7 @@ from .measure import sample
 from .metrics import fidelity, trace_distance, tvd
 from .model import NoiseModel
 from .render import compare, measurement_panel, metrics_panel
+from .sweep import sweep
 from .style import S
 
 
@@ -107,18 +108,16 @@ def sweep_report(
     rates: List[float],
 ) -> str:
     """Fidelity vs. depolarizing rate — the decoherence decay curve as a panel."""
-    ideal = run_ideal(qc)
     lines = [
         f"{S.c('rate', 'grey', 'bold')}   {S.c('fidelity', 'grey', 'bold')}   "
         f"{S.c('decay curve', 'grey', 'bold')}",
         S.c(S.h * 38, "grey"),
     ]
-    for p in rates:
-        noisy = run(qc, presets.depolarizing(p))
-        f = fidelity(ideal, noisy)
+    for pt in sweep(qc, presets.depolarizing, rates):
+        f = pt.fidelity
         styles = ("green",) if f >= 0.9 else ("yellow",) if f >= 0.7 else ("red",)
         bar = S.bar(f, 22, *styles)
-        lines.append(f"{p:5.3f}   {S.c(f'{f:6.3f}', *styles)}   {bar}")
+        lines.append(f"{pt.rate:5.3f}   {S.c(f'{f:6.3f}', *styles)}   {bar}")
     return S.frame(lines, title="DEPOLARIZING SWEEP", width=42,
                    title_style=("bold", "orange"))
 

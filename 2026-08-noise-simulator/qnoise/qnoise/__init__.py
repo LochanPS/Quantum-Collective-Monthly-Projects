@@ -40,6 +40,7 @@ from .model import NoiseModel
 from . import model as presets
 from .measure import ReadoutError, sample
 from .metrics import fidelity, trace_distance, tvd
+from .sweep import SweepPoint, sweep
 
 __version__ = "0.1.0"
 __author__ = "Quantum Collective"
@@ -70,4 +71,7 @@ __all__ = [
     "fidelity",
     "trace_distance",
     "tvd",
+    # sweeps
+    "sweep",
+    "SweepPoint",
 ]
