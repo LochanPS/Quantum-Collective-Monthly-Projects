@@ -77,6 +77,7 @@ qviz-step
 | Bernstein-Vazirani | `qviz.algorithms.bernstein_vazirani` | recovers a hidden bitstring, any length |
 | Grover's search | `qviz.algorithms.grover` | v1 supports 2-qubit marked states only — generalizing to N qubits needs a multi-controlled-Z oracle, a good Advanced-tier contribution. Includes an amplitude-amplification-across-steps view |
 | Quantum Fourier Transform | `qviz.algorithms.qft_algorithm` | wraps qcsim's `qft()`; annotates each Hadamard / controlled-phase (with angle) / swap. Naming which frequency each phase encodes is a good Beginner-tier contribution |
+| Superdense coding | `qviz.algorithms.superdense_coding` | Alice sends 2 classical bits by transmitting 1 qubit of a shared Bell pair. Shows that the Z encoding changes no probabilities, only a phase, until Bob's decoding turns it into a readable bit |
 
 Each returns an `AlgorithmResult` (`circuit`, `annotations`, `phases`, `title`, `info`, `registers`, `summarize`, `outcome`) — see [Algorithm Development](docs/Algorithm-Development.md).
 

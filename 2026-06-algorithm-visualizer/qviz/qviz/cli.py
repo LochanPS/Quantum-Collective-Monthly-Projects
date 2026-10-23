@@ -12,7 +12,14 @@ from __future__ import annotations
 import time
 from typing import Callable, Dict, List, Optional
 
-from .algorithms import AlgorithmResult, bernstein_vazirani, deutsch_jozsa, grover, qft_algorithm
+from .algorithms import (
+    AlgorithmResult,
+    bernstein_vazirani,
+    deutsch_jozsa,
+    grover,
+    qft_algorithm,
+    superdense_coding,
+)
 from .render import render_execution_summary, render_measurement, render_step
 from .stepper import Step, step_through
 
@@ -57,11 +64,17 @@ def _build_qft() -> AlgorithmResult:
     return qft_algorithm(n, initial)
 
 
+def _build_superdense_coding() -> AlgorithmResult:
+    message = input("  2-bit message for Alice to send [10]: ").strip() or "10"
+    return superdense_coding(message)
+
+
 _ALGORITHMS: Dict[str, Callable[[], AlgorithmResult]] = {
     "1": _build_deutsch_jozsa,
     "2": _build_bernstein_vazirani,
     "3": _build_grover,
     "4": _build_qft,
+    "5": _build_superdense_coding,
 }
 
 _ALGORITHM_NAMES = {
@@ -69,6 +82,7 @@ _ALGORITHM_NAMES = {
     "2": "Bernstein-Vazirani",
     "3": "Grover's search",
     "4": "Quantum Fourier Transform",
+    "5": "Superdense coding",
 }
 
 

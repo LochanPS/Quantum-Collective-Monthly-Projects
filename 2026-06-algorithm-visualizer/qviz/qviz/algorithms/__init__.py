@@ -12,6 +12,7 @@ from .bernstein_vazirani import bernstein_vazirani
 from .deutsch_jozsa import deutsch_jozsa
 from .grover import grover
 from .qft_algorithm import qft_algorithm
+from .superdense_coding import superdense_coding
 
 __all__ = [
     "AlgorithmResult",
@@ -21,4 +22,5 @@ __all__ = [
     "bernstein_vazirani",
     "grover",
     "qft_algorithm",
+    "superdense_coding",
 ]
