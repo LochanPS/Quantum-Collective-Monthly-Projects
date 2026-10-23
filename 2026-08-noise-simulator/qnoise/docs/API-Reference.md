@@ -42,6 +42,7 @@ All are single-qubit; `.kraus()` returns a list of 2×2 arrays.
 | `PhaseFlip(p)` | `p` | Apply Z with probability `p`. |
 | `AmplitudeDamping(gamma)` | `γ` | T1 energy decay `|1> -> |0>`. |
 | `PhaseDamping(gamma)` | `γ` | T2 dephasing (phase loss, no energy loss). |
+| `GeneralizedAmplitudeDamping(gamma, excited_population)` | `γ`, `p_exc ∈ [0,1]` | T1 decay toward a thermal state with `p_exc` in `\|1>` (non-zero temperature). `p_exc=0` is `AmplitudeDamping`. |
 | `NoiseChannel` | — | Base class. Implement `.kraus()`. `.is_trace_preserving()` checks completeness. |
 
 ## NoiseModel & presets (`qnoise.model`, exposed as `qnoise.presets`)

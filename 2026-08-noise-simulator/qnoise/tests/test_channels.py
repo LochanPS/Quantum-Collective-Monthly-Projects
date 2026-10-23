@@ -8,6 +8,7 @@ from qnoise import (
     BitFlip,
     Depolarizing,
     DensityMatrix,
+    GeneralizedAmplitudeDamping,
     PhaseDamping,
     PhaseFlip,
     apply_channel,
@@ -21,6 +22,8 @@ ALL_CHANNELS = [
     PhaseFlip(0.3),
     AmplitudeDamping(0.4),
     PhaseDamping(0.4),
+    GeneralizedAmplitudeDamping(0.4, 0.2),
+    GeneralizedAmplitudeDamping(1.0, 1.0),
 ]
 
 
@@ -65,6 +68,33 @@ def test_amplitude_damping_gamma1_relaxes_to_ground():
     assert np.allclose(dm.matrix(), expected)
 
 
+def test_generalized_amplitude_damping_zero_temperature_matches_amplitude_damping():
+    # No thermal excitation -> identical action to plain amplitude damping.
+    plus = np.array([1, 1], dtype=complex) / np.sqrt(2)
+    gad = DensityMatrix.from_statevector(plus)
+    ad = DensityMatrix.from_statevector(plus)
+    apply_channel(gad, GeneralizedAmplitudeDamping(0.3, 0.0), 0)
+    apply_channel(ad, AmplitudeDamping(0.3), 0)
+    assert np.allclose(gad.matrix(), ad.matrix())
+
+
+@pytest.mark.parametrize("start", [[1, 0], [0, 1], [1, 1]])
+def test_generalized_amplitude_damping_gamma1_gives_thermal_state(start):
+    # Full relaxation forgets the input and lands on diag(1 - p_exc, p_exc).
+    psi = np.array(start, dtype=complex) / np.linalg.norm(start)
+    dm = DensityMatrix.from_statevector(psi)
+    apply_channel(dm, GeneralizedAmplitudeDamping(1.0, 0.25), 0)
+    assert np.allclose(dm.matrix(), np.diag([0.75, 0.25]))
+
+
+def test_generalized_amplitude_damping_excites_ground_state():
+    # Unlike plain amplitude damping, a warm bath can push |0> up to |1>.
+    dm = DensityMatrix.from_statevector(np.array([1, 0], dtype=complex))
+    apply_channel(dm, GeneralizedAmplitudeDamping(0.5, 0.2), 0)
+    # P(1) = gamma * p_exc = 0.5 * 0.2
+    assert dm.probabilities()[1] == pytest.approx(0.1)
+
+
 def test_bit_flip_full_flips_population():
     dm = DensityMatrix.from_statevector(np.array([1, 0], dtype=complex))
     apply_channel(dm, BitFlip(1.0), 0)
@@ -86,6 +116,8 @@ def test_invalid_rate_rejected():
         Depolarizing(1.5)
     with pytest.raises(ValueError):
         AmplitudeDamping(-0.1)
+    with pytest.raises(ValueError):
+        GeneralizedAmplitudeDamping(0.5, 1.2)
 
 
 def test_embed_targets_correct_qubit():

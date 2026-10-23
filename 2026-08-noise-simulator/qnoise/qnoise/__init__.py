@@ -34,6 +34,7 @@ from .channels import (
     PhaseFlip,
     AmplitudeDamping,
     PhaseDamping,
+    GeneralizedAmplitudeDamping,
 )
 from .model import NoiseModel
 from . import model as presets
@@ -58,6 +59,7 @@ __all__ = [
     "PhaseFlip",
     "AmplitudeDamping",
     "PhaseDamping",
+    "GeneralizedAmplitudeDamping",
     # models
     "NoiseModel",
     "presets",
