@@ -92,6 +92,14 @@ nm = (NoiseModel()
 noisy = run(qc, nm)
 ```
 
+Model a "bad qubit" by limiting a channel to specific qubits:
+
+```python
+nm = (NoiseModel()
+      .add_channel(Depolarizing(0.001))              # every qubit
+      .add_channel(Depolarizing(0.05), qubits=[2]))  # qubit 2 is much worse
+```
+
 ---
 
 ## What's inside
