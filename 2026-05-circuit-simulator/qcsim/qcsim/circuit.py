@@ -307,10 +307,7 @@ class QuantumCircuit:
         sv_slice = sv[tuple(idx)]
 
         # Adjust tgt_ax for the two removed axes
-        adj = tgt_ax
-        for removed in sorted([c0_ax, c1_ax]):
-            if removed < adj:
-                adj -= 1
+        adj = tgt_ax - sum(removed < tgt_ax for removed in (c0_ax, c1_ax))
 
         sv[tuple(idx)] = np.flip(sv_slice, axis=adj).copy()
         self._state.set(sv.reshape(2**n))
