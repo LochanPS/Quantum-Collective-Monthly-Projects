@@ -871,7 +871,7 @@ class QuantumCircuit:
                 pass
         # Fallback: use statevector reshaping for correctness
         # Build full unitary column by column
-        result = np.eye(dim, dtype=complex)
+        result = np.zeros((dim, dim), dtype=complex)
         # Apply mat to the subspace of the specified qubits
         # Use a basis-by-basis approach
         for basis_idx in range(dim):

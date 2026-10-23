@@ -344,6 +344,36 @@ class TestToffoli:
 
 
 # ================================================================== #
+#  Custom unitary
+# ================================================================== #
+
+
+class TestCustomUnitary:
+    def test_two_qubit_identity_is_no_op(self):
+        qc = QuantumCircuit(2)
+        qc.h(0)
+        before = qc.statevector()
+        qc.unitary(np.eye(4), [0, 1])
+        assert np.allclose(qc.statevector(), before)
+
+    def test_two_qubit_matches_builtin_cnot(self):
+        """First qubit in the list is the MSB of the matrix, so it's the control."""
+        cnot = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]])
+        qc = QuantumCircuit(3)
+        qc.h(0).unitary(cnot, [0, 2])
+        ref = QuantumCircuit(3)
+        ref.h(0).cnot(0, 2)
+        assert np.allclose(qc.statevector(), ref.statevector())
+
+    def test_two_qubit_keeps_state_normalized(self):
+        swap = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]])
+        qc = QuantumCircuit(3)
+        qc.x(0).unitary(swap, [0, 1])
+        assert abs(qc._state.norm() - 1.0) < 1e-10
+        assert abs(qc.probabilities().get("010", 0) - 1.0) < 1e-10
+
+
+# ================================================================== #
 #  5-qubit circuits
 # ================================================================== #
 
