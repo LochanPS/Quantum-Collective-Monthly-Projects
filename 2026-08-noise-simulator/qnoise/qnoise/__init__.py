@@ -35,6 +35,7 @@ from .channels import (
     AmplitudeDamping,
     PhaseDamping,
     GeneralizedAmplitudeDamping,
+    CoherentOverRotation,
 )
 from .model import NoiseModel
 from . import model as presets
@@ -60,6 +61,7 @@ __all__ = [
     "AmplitudeDamping",
     "PhaseDamping",
     "GeneralizedAmplitudeDamping",
+    "CoherentOverRotation",
     # models
     "NoiseModel",
     "presets",
